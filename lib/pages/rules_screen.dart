@@ -31,6 +31,7 @@ class _RulesPageState extends State<RulesPage> {
         child: Center(
           child: Column(
             children: [
+              const SizedBox(height: 50),
               TextButton.icon(
                 onPressed: () {_onRulesNext();},
                 icon: const Icon(Icons.arrow_back),

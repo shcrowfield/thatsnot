@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:font_awesome_icon_class/font_awesome_icon_class.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:thatsnot/pages/rules_screen.dart';
 import 'package:thatsnot/button_style.dart';
-
-
+import 'package:thatsnot/google_auth.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -16,7 +13,7 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> {
   User? user = FirebaseAuth.instance.currentUser;
-  User? gUser;
+  final GoogleAuth _googleAuth = GoogleAuth();
 
   _onRulesNext() {
     Navigator.pushReplacement(
@@ -40,7 +37,14 @@ class _StartPageState extends State<StartPage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               Flexible(
-                child: buildGoogleSignInOutButton(),
+                child:
+                    _googleAuth.buildGoogleSignInOutButton(context, () async {
+                  await _googleAuth.signIn();
+                  setState(() {});
+                }, () async {
+                  await _googleAuth.signOut();
+                  setState(() {});
+                }),
               ),
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -127,62 +131,5 @@ class _StartPageState extends State<StartPage> {
         ),
       ],
     );
-  }
-
-  googleSignIn() async {
-    final GoogleSignIn googleSignIn = GoogleSignIn();
-
-    try {
-      final GoogleSignInAccount? googleSignInAccount =
-          await googleSignIn.signIn();
-      if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
-        final AuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleSignInAuthentication.accessToken,
-          idToken: googleSignInAuthentication.idToken,
-        );
-        final UserCredential authResult =
-            await FirebaseAuth.instance.signInWithCredential(credential);
-        setState(() {
-          gUser = authResult
-              .user; // Update the Google user state upon successful sign-in
-        });
-      }
-    } catch (e) {
-      print(e);
-    }
-  }
-
-  signOut() async {
-    await FirebaseAuth.instance.signOut();
-    await GoogleSignIn().signOut();
-    setState(() {
-      gUser = null; // Reset the Google user state upon sign-out
-    });
-  }
-
-  Widget buildGoogleSignInOutButton() {
-    if (gUser == null) {
-      // Google user not signed in, show sign-in button
-      return ElevatedButton.icon(
-        onPressed: () async {
-          googleSignIn();
-        },
-        style: googleButtonStyle,
-        icon: const Icon(FontAwesomeIcons.google),
-        label: const Text('Google bejelentkezés'),
-      );
-    } else {
-      // Google user is signed in, show sign-out button
-      return ElevatedButton.icon(
-        onPressed: () {
-          signOut();
-        },
-        style: googleButtonStyle,
-        icon: const Icon(FontAwesomeIcons.google),
-        label: const Text('Kijelentkezés Googleból'),
-      );
-    }
   }
 }
