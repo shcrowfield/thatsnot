@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "111460836207",
+    "project_id": "thatsnot-71ba4",
+    "storage_bucket": "thatsnot-71ba4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:111460836207:android:cc2423442fde589ba63e9a",
+        "android_client_info": {
+          "package_name": "com.example.thatsnot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7akbG58HVApadTDa4ECkq3qJbEO7Zldg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
