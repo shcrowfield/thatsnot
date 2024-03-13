@@ -11,3 +11,13 @@ final ButtonStyle googleButtonStyle = ElevatedButton.styleFrom(
   foregroundColor: Colors.white,
   minimumSize: const Size(200, 40),
 );
+
+final ButtonStyle choosedButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.orange,
+  foregroundColor: Colors.white,
+);
+
+final ButtonStyle unchoosedButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.white,
+  foregroundColor: Colors.black,
+);

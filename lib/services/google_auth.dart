@@ -7,7 +7,7 @@ import 'package:thatsnot/button_style.dart';
 class GoogleAuth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  User? gUser;
+  User? user;
 
   Future<void> signIn() async {
     try {
@@ -19,7 +19,7 @@ class GoogleAuth {
           idToken: googleSignInAuthentication.idToken,
         );
         final UserCredential authResult = await _auth.signInWithCredential(credential);
-        gUser = authResult.user;
+        user = authResult.user;
       }
     } catch (e) {
       print(e);
@@ -29,12 +29,11 @@ class GoogleAuth {
   Future<void> signOut() async {
     await _auth.signOut();
     await _googleSignIn.signOut();
-    gUser = null;
+    user = null;
   }
 
   Widget buildGoogleSignInOutButton(BuildContext context, VoidCallback signInCallback, VoidCallback signOutCallback) {
-    if (gUser == null) {
-      // Google user not signed in, show sign-in button
+    if (user == null) {
       return ElevatedButton.icon(
         onPressed: signInCallback,
         style: googleButtonStyle,
@@ -42,12 +41,17 @@ class GoogleAuth {
         label: const Text('Google bejelentkezés'),
       );
     } else {
-      // Google user is signed in, show sign-out button
-      return ElevatedButton.icon(
-        onPressed: signOutCallback,
-        style: googleButtonStyle,
-        icon: const Icon(FontAwesomeIcons.google),
-        label: const Text('Kijelentkezés Googleból'),
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ElevatedButton.icon(
+            onPressed: signOutCallback,
+            style: googleButtonStyle,
+            icon: const Icon(FontAwesomeIcons.google),
+            label: const Text('Kijelentkezés Googleból'),
+          ),
+          Text('Bejelentkezve: ${user!.displayName}'),
+        ],
       );
     }
   }

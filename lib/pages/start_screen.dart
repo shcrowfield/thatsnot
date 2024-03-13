@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/pages/rules_screen.dart';
 import 'package:thatsnot/button_style.dart';
-import 'package:thatsnot/google_auth.dart';
+import 'package:thatsnot/services/google_auth.dart';
+import 'package:thatsnot/pages/lobby_creation_page.dart';
+import 'package:thatsnot/pages/lobby_list_page.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -18,6 +20,16 @@ class _StartPageState extends State<StartPage> {
   _onRulesNext() {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const RulesPage()));
+  }
+
+  _onLobbyNext() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const LobbyCreationPage()));
+  }
+
+  _onLobbyListNext() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const LobbiesListPage()));
   }
 
   @override
@@ -52,15 +64,15 @@ class _StartPageState extends State<StartPage> {
                   Image.asset('assets/images/logo.png',
                       width: 200, height: 150),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {_onLobbyNext();},
                     style: menuButtonStyle,
                     child: const Text('Lobbi készítése'),
                   ),
                   const SizedBox(height: 5),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {_onLobbyListNext();},
                     style: menuButtonStyle,
-                    child: const Text('Lobbi keresése'),
+                    child: const Text('Aktív lobbik'),
                   ),
                   const SizedBox(height: 5),
                   ElevatedButton(
@@ -79,8 +91,8 @@ class _StartPageState extends State<StartPage> {
                       onPressed: () {
                         _onRulesNext();
                       },
-                      child: Text('Szabályok'),
-                      style: menuButtonStyle),
+                      style: menuButtonStyle,
+                      child: const Text('Szabályok')),
                 ],
               ),
             ],
