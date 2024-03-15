@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/language.dart';
 import'package:thatsnot/pages/start_screen.dart';
 
 class LobbiesListPage extends StatefulWidget {
@@ -30,13 +31,13 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
         child: Column(
           children: [
             const SizedBox(height: 25),
-            const Text('Elérhet Lobbik', style: TextStyle(color: Colors.white, fontSize: 24)),
+            Text(language[3], style: const TextStyle(color: Colors.white, fontSize: 24)),
             TextButton.icon(
               onPressed: () {
                 _onStartNext();
               },
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Vissza'),
+              label:Text(language[0]),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.white,
               ),

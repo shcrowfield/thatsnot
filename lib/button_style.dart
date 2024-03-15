@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
 
 final ButtonStyle menuButtonStyle = ElevatedButton.styleFrom(
-backgroundColor: Colors.white,
-foregroundColor: Colors.black,
-minimumSize: const Size(200, 40),
+  backgroundColor: Colors.white,
+  foregroundColor: Colors.black,
+  minimumSize: const Size(200, 40),
+);
+
+final ButtonStyle disabledMenuButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.white38,
+  foregroundColor: Colors.black,
+  minimumSize: const Size(200, 40),
 );
 
 final ButtonStyle googleButtonStyle = ElevatedButton.styleFrom(
@@ -21,3 +27,4 @@ final ButtonStyle unchoosedButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white,
   foregroundColor: Colors.black,
 );
+

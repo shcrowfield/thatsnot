@@ -18,4 +18,13 @@ class Player {
    'cards': cards.map((key, card) => MapEntry(key, card.toMap())),
   };
  }
+
+ factory Player.fromMap(Map<String, dynamic> data) {
+  return Player(
+   pid: data['pid'],
+   name: data['name'],
+   points: data['points'],
+   cards: Map<String, Card>.from(data['cards']),
+  );
+ }
 }

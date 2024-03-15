@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:thatsnot/button_style.dart';
+import 'package:thatsnot/language.dart';
 
 class GoogleAuth {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -11,14 +12,17 @@ class GoogleAuth {
 
   Future<void> signIn() async {
     try {
-      final GoogleSignInAccount? googleSignInAccount = await _googleSignIn.signIn();
+      final GoogleSignInAccount? googleSignInAccount =
+          await _googleSignIn.signIn();
       if (googleSignInAccount != null) {
-        final GoogleSignInAuthentication googleSignInAuthentication = await googleSignInAccount.authentication;
+        final GoogleSignInAuthentication googleSignInAuthentication =
+            await googleSignInAccount.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
         );
-        final UserCredential authResult = await _auth.signInWithCredential(credential);
+        final UserCredential authResult =
+            await _auth.signInWithCredential(credential);
         user = authResult.user;
       }
     } catch (e) {
@@ -32,13 +36,16 @@ class GoogleAuth {
     user = null;
   }
 
-  Widget buildGoogleSignInOutButton(BuildContext context, VoidCallback signInCallback, VoidCallback signOutCallback) {
+  Widget buildGoogleSignInOutButton(BuildContext context,
+      VoidCallback signInCallback, VoidCallback signOutCallback) {
+
+
     if (user == null) {
       return ElevatedButton.icon(
         onPressed: signInCallback,
         style: googleButtonStyle,
         icon: const Icon(FontAwesomeIcons.google),
-        label: const Text('Google bejelentkezés'),
+        label: Text(language[7]),
       );
     } else {
       return Column(
@@ -48,7 +55,7 @@ class GoogleAuth {
             onPressed: signOutCallback,
             style: googleButtonStyle,
             icon: const Icon(FontAwesomeIcons.google),
-            label: const Text('Kijelentkezés Googleból'),
+            label: Text(language[6]),
           ),
           Text('Bejelentkezve: ${user!.displayName}'),
         ],
