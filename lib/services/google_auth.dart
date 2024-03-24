@@ -45,7 +45,7 @@ class GoogleAuth {
         onPressed: signInCallback,
         style: googleButtonStyle,
         icon: const Icon(FontAwesomeIcons.google),
-        label: Text(language[7]),
+        label: Text(languageMap['GoogleSignIn'] ?? ''),
       );
     } else {
       return Column(
@@ -55,7 +55,7 @@ class GoogleAuth {
             onPressed: signOutCallback,
             style: googleButtonStyle,
             icon: const Icon(FontAwesomeIcons.google),
-            label: Text(language[6]),
+            label: Text(languageMap['GoogleSignOut'] ?? ''),
           ),
           Text('Bejelentkezve: ${user!.displayName}'),
         ],

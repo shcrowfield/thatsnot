@@ -1,48 +1,52 @@
-final List<String> langHun = [
-  'Vissza',
-  'Lobby készítése',
-  'Aktív lobbik',
-  'Eredmények',
-  'Bejelentkezés',
-  'Kijelentezés',
-  'Kijelentkezés Googleból',
-  'Google bejelentkezés',
-  'Játékszabályok',
-  'Tovább',
-  'Játékosok száma:',
-  'Lobbi neve',
-  'Becenév'
-];
 
-final List<String> langEng = [
-  'Back',
-  'Create lobby',
-  'Active lobbies',
-  'Results',
-  'Sign in',
-  'Sign out',
-  'Sign out from Google',
-  'Google sign in',
-  'Rules',
-  'Next',
-  'Number of players:',
-  'Lobby name',
-  'Nickname'
+final Map<String, String> langMapEng = {
+  'Back': 'Back',
+  'CreateLobby' : 'Create lobby',
+  'ActiveLobbies' : 'Active lobbies',
+  'Results' : 'Results',
+  'SignIn' : 'Sign in',
+  'SignOut' : 'Sign out',
+  'GoogleSignOut' : 'Sign out from Google',
+  'GoogleSignIn' : 'Google sign in',
+  'Rules' : 'Rules',
+  'Next' : 'Next',
+  'NumberOfPlayers' : 'Number of players:',
+  'LobbyName' : 'Lobby name',
+  'Nickname' : 'Nickname',
+  'Players' : 'Players'
+};
 
-];
+final Map<String, String> langMapHun = {
+  'Back': 'Vissza',
+  'CreateLobby' : 'Lobbi készítése',
+  'ActiveLobbies' : 'Aktív lobbik',
+  'Results' : 'Eredmények',
+  'SignIn' : 'Bejelentkezés',
+  'SignOut' : 'Kijelentkezés',
+  'GoogleSignOut' : 'Kijeletkezés Googleból',
+  'GoogleSignIn' : 'Google bejelentkezés',
+  'Rules' : 'Szabályok',
+  'Next' : 'Tovább',
+  'NumberOfPlayers' : 'Játékosok száma:',
+  'LobbyName' : 'Lobbi neve',
+  'Nickname' : 'Becenév',
+  'Players' : 'Játékosok'
+};
 
-List<String> language = langHun;
+Map<String, String> languageMap = langMapHun;
 bool lang = false;
 
 void setLanguage(bool langValue) {
   lang = langValue;
-  changeLanguage();
+  changeLanguageMap();
 }
 
-List<String> changeLanguage() {
+
+Map<String, String> changeLanguageMap() {
   if (lang) {
-    return language = langEng;
+    return languageMap = langMapEng;
   } else {
-    return language = langHun;
+    return languageMap = langMapHun;
   }
 }
+

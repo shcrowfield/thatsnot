@@ -18,13 +18,15 @@ class _StartPageState extends State<StartPage> {
   User? user = FirebaseAuth.instance.currentUser;
   final GoogleAuth _googleAuth = GoogleAuth();
   String nickName = '';
-
   late TextEditingController nickNameController;
 
   @override
   initState() {
     super.initState();
     nickNameController = TextEditingController();
+    if (user == null || user!.uid.isEmpty) {
+      _loginAnonymously();
+    }
   }
 
   @override
@@ -39,17 +41,23 @@ class _StartPageState extends State<StartPage> {
   }
 
   _onLobbyNext() {
-    Navigator.pushReplacement(context,
-        MaterialPageRoute(builder: (context) => LobbyCreationPage(user: user, nickName: nickName)));
+    Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+            builder: (context) =>
+                LobbyCreationPage(user: user, nickName: nickName)));
   }
 
   _onLobbyListNext() {
     Navigator.pushReplacement(context,
-        MaterialPageRoute(builder: (context) => const LobbiesListPage()));
+        MaterialPageRoute(builder: (context) => LobbiesListPage(user: user)));
   }
 
   @override
   Widget build(BuildContext context) {
+   /* Size screenSize = MediaQuery.of(context).size;
+    double containerWidth = screenSize.width * 0.5;
+    double containerHeight = screenSize.height * 0.3;*/
     return Scaffold(
       backgroundColor: Colors.deepPurple,
       body: Container(
@@ -68,8 +76,8 @@ class _StartPageState extends State<StartPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Flexible(
-                    child:
-                        _googleAuth.buildGoogleSignInOutButton(context, () async {
+                    child: _googleAuth.buildGoogleSignInOutButton(context,
+                        () async {
                       await _googleAuth.signIn();
                       setState(() {});
                     }, () async {
@@ -77,28 +85,7 @@ class _StartPageState extends State<StartPage> {
                       setState(() {});
                     }),
                   ),
-                  SizedBox(
-                    width: 200,
-                    child: TextFormField(
-                      decoration: InputDecoration(
-                        hintText: language[12],
-                        fillColor: Colors.white,
-                        filled: true,
-                        enabledBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.white, width: 2.0),
-                        ),
-                        focusedBorder: const OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.orange, width: 2.0),
-                        ),
-                      ),
-                      controller: nickNameController,
-                      onChanged: (String value) {
-                        setState(() {
-                          nickName = nickNameController.text;
-                        });
-                      },
-                    ),
-                  ),
+
                 ],
               ),
               Column(
@@ -107,21 +94,25 @@ class _StartPageState extends State<StartPage> {
                   Image.asset('assets/images/logo.png',
                       width: 200, height: 140),
                   ElevatedButton(
-                    onPressed: () { nickName == '' ? null : _onLobbyNext(); },
-                    style:nickName == '' ? disabledMenuButtonStyle : menuButtonStyle,
-                    child: Text(language[1]),
+                    onPressed: () {
+                      _onLobbyNext();
+                    },
+                    style: menuButtonStyle,
+                    child: Text(languageMap['CreateLobby'] ?? ''),
                   ),
                   const SizedBox(height: 5),
                   ElevatedButton(
-                    onPressed: () { nickName == '' ? null : _onLobbyListNext(); },
-                    style: nickName == '' ? disabledMenuButtonStyle : menuButtonStyle,
-                    child: Text(language[2]),
+                    onPressed: () {
+                      _onLobbyListNext();
+                    },
+                    style: menuButtonStyle,
+                    child: Text(languageMap['ActiveLobbies'] ?? ''),
                   ),
                   const SizedBox(height: 5),
                   ElevatedButton(
                     onPressed: () {},
                     style: menuButtonStyle,
-                    child: Text(language[3]),
+                    child: Text(languageMap['Results'] ?? ''),
                   ),
                   const SizedBox(height: 5),
                   user == null ? buildSignInButton() : buildSignOutButton(),
@@ -135,7 +126,7 @@ class _StartPageState extends State<StartPage> {
                       _onRulesNext();
                     },
                     style: menuButtonStyle,
-                    child: Text(language[8]),
+                    child: Text(languageMap['Rules'] ?? ''),
                   ),
                   Switch(
                     value: lang,
@@ -143,7 +134,7 @@ class _StartPageState extends State<StartPage> {
                       setState(() {
                         lang = value;
                         setLanguage(lang);
-                        changeLanguage();
+                        changeLanguageMap();
                       });
                     },
                   ),
@@ -161,7 +152,8 @@ class _StartPageState extends State<StartPage> {
   }
 
   Widget buildSignInButton() {
-    List<String> language = changeLanguage();
+    //List<String> language = changeLanguage();
+    Map<String, String> languageMap = changeLanguageMap();
     return ElevatedButton(
       onPressed: () async {
         try {
@@ -174,12 +166,13 @@ class _StartPageState extends State<StartPage> {
         }
       },
       style: menuButtonStyle,
-      child: Text(language[4]),
+      child: Text(languageMap['SignIn'] ?? ''),
     );
   }
 
   Widget buildSignOutButton() {
-    List<String> language = changeLanguage();
+    //List<String> language = changeLanguage();
+    Map<String, String> languageMap = changeLanguageMap();
     return Column(
       children: [
         Text("User ID: ${user!.uid}"),
@@ -191,9 +184,21 @@ class _StartPageState extends State<StartPage> {
             });
           },
           style: menuButtonStyle,
-          child: Text(language[5]),
+          child: Text(languageMap['SignOut'] ?? ''),
         ),
       ],
     );
+  }
+
+  Future<void> _loginAnonymously() async {
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+      setState(() {
+        user = FirebaseAuth.instance.currentUser;
+      });
+      print("Signed in with temporary account.");
+    } catch (e) {
+      print("Failed to sign in anonymously: $e");
+    }
   }
 }

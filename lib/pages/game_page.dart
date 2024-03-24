@@ -29,7 +29,7 @@ class _GamePageState extends State<GamePage> {
         child: Column(
           children: [
             const SizedBox(height: 25),
-            Text('Game Page', style: const TextStyle(color: Colors.white, fontSize: 24)),
+            const Text('Game Page', style: TextStyle(color: Colors.white, fontSize: 24)),
             TextButton.icon(
               onPressed: () {
                 _onStartNext();
