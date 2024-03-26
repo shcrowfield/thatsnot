@@ -37,6 +37,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   bool anonym = true;
   late TextEditingController nickNameController;
   String nickName = '';
+  int isReady = 0;
 
   @override
   void initState() {
@@ -201,6 +202,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                               player2,
                               player3,
                               player4,
+                              isReady,
                             );
                       _onLobbyDetailsPageNext();
                     },

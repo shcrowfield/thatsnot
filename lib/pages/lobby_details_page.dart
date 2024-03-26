@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thatsnot/language.dart';
 import 'package:thatsnot/pages/start_screen.dart';
+import 'package:thatsnot/button_style.dart';
+import 'package:thatsnot/pages/game_page.dart';
 
 class LobbyDetailsPage extends StatefulWidget {
   final String lobbyId;
@@ -19,6 +20,20 @@ class LobbyDetailsPage extends StatefulWidget {
 
 class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
   int? currentPlayerCount;
+  bool isPressed = false;
+
+  _isReadyCounter() async{
+    var documentSnapshot = await FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(widget.lobbyId)
+        .get();
+    Map<String, dynamic>? data = documentSnapshot.data();
+    if(data?['isReady'] == data?['playerLimit']){
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => const GamePage()));
+      print('All players are ready');
+    }
+  }
 
   _checkPlayerMap() async {
     var documentSnapshot = await FirebaseFirestore.instance
@@ -31,6 +46,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     Map<String, dynamic> player3 = data?['player3'];
     Map<String, dynamic> player4 = data?['player4'];
     List<Map<String, dynamic>> players = [player1, player2, player3, player4];
+    //var players = LobbyManager(lobbyId: widget.lobbyId).players;
 
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == widget.user!.uid) {
@@ -123,16 +139,35 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                       // Display list of users
                       for (int i = 1; i <= 4; i++)
                         if (lobby['player$i'] != null)
-                          Row(children: [
-                            Text(languageMap['Player'] ?? '',
+                          Column(
+                            children: [
+                              Text(languageMap['Player'] ?? '',
+                                  style: const TextStyle(
+                                      backgroundColor: Colors.white,
+                                      fontSize: 20)),
+                              Text(
+                                lobby['player$i']['name'],
                                 style: const TextStyle(
-                                    backgroundColor: Colors.white)),
-                            Text(
-                              lobby['player$i']['name'],
-                              style: const TextStyle(
-                                  backgroundColor: Colors.white),
-                            ),
-                          ]),
+                                    backgroundColor: Colors.white,
+                                    fontSize: 20),
+                              ),
+                            ],
+                          ),
+                      ElevatedButton(
+                        onPressed: () {
+                          isPressed
+                              ? null
+                              : setState(() {
+                                  isPressed = true;
+                                  lobby.reference.update({
+                                    'isReady': FieldValue.increment(1),
+                                  });
+                                });
+                          _isReadyCounter();
+                        },
+                        style: isPressed ? choosedButtonStyle : menuButtonStyle,
+                        child: Text(languageMap['Ready'] ?? ''),
+                      ),
                     ],
                   );
                 },
