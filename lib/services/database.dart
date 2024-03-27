@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/models/player.dart';
 
 class DatabaseService {
@@ -11,17 +12,11 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('lobbies');
 
   Future updatePlayer(Player player, int currentPlayerCount) async {
-    var documentSnapshot = await FirebaseFirestore.instance
-        .collection('lobbies')
-        .doc(lobbyId)
-        .get();
-    Map<String, dynamic>? data = documentSnapshot.data();
-    Map<String, dynamic> player1 = data?['player1'];
-    Map<String, dynamic> player2 = data?['player2'];
-    Map<String, dynamic> player3 = data?['player3'];
-    Map<String, dynamic> player4 = data?['player4'];
-    List<Map<String, dynamic>> players = [player1, player2, player3, player4];
-    for (int i = 0; i < 4; i++) {
+
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+
+    for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == '') {
         return await lobbyCollection.doc(lobbyId).update({
           'currentPlayerCount': currentPlayerCount + 1,
@@ -30,13 +25,6 @@ class DatabaseService {
       }
     }
   }
-
-
-  /*Future updateCurrentPlayerCount(int currentPlayerCount) async {
-    return await lobbyCollection.doc(lobbyId).update({
-      'currentPlayerCount': currentPlayerCount,
-    });
-  }*/
 
   Future updateLobbyData(
     String lobbyName,

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thatsnot/language.dart';
+import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/pages/game_page.dart';
@@ -35,53 +36,6 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     }
   }
 
-  _checkPlayerMap() async {
-    var documentSnapshot = await FirebaseFirestore.instance
-        .collection('lobbies')
-        .doc(widget.lobbyId)
-        .get();
-    Map<String, dynamic>? data = documentSnapshot.data();
-    Map<String, dynamic> player1 = data?['player1'];
-    Map<String, dynamic> player2 = data?['player2'];
-    Map<String, dynamic> player3 = data?['player3'];
-    Map<String, dynamic> player4 = data?['player4'];
-    List<Map<String, dynamic>> players = [player1, player2, player3, player4];
-    //var players = LobbyManager(lobbyId: widget.lobbyId).players;
-
-    for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == widget.user!.uid) {
-        Map<String, dynamic> updatedPlayer = {
-          ...players[i],
-          'cards': [],
-          'isHost': false,
-          'points': 0,
-          'name': '',
-          'uid': ''
-        };
-        String playerFieldName = 'player${i + 1}';
-        documentSnapshot.reference.update({playerFieldName: updatedPlayer});
-      }
-    }
-
-    if (currentPlayerCount != null && currentPlayerCount! > 0) {
-      await documentSnapshot.reference.update({
-        'currentPlayerCount': FieldValue.increment(-1),
-      });
-    }
-    _deletePlayer();
-  }
-
-  _deletePlayer() async {
-    var documentSnapshot = await FirebaseFirestore.instance
-        .collection('lobbies')
-        .doc(widget.lobbyId)
-        .get();
-    Map<String, dynamic>? data = documentSnapshot.data();
-    if (data?['currentPlayerCount'] == 0) {
-      await documentSnapshot.reference.delete();
-    }
-  }
-
   _onStartNext() {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
@@ -104,7 +58,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
             children: [
               TextButton.icon(
                 onPressed: () {
-                  _checkPlayerMap();
+                  LobbyManager.checkPlayerMap(widget.lobbyId, widget.user, currentPlayerCount);
                   _onStartNext();
                 },
                 icon: const Icon(Icons.arrow_back),
