@@ -42,16 +42,15 @@ class LobbyManager {
     if (currentPlayerCount != null && currentPlayerCount! > 0) {
       await documentSnapshot.reference.update({
         'currentPlayerCount': FieldValue.increment(-1),
+        'isReady': FieldValue.increment(-1)
       });
     }
     LobbyManager.deletePlayer(lobbyId);
   }
 
   static deletePlayer(lobbyId) async {
-    var documentSnapshot = await FirebaseFirestore.instance
-        .collection('lobbies')
-        .doc(lobbyId)
-        .get();
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? data = documentSnapshot.data();
     if (data?['currentPlayerCount'] == 0) {
       await documentSnapshot.reference.delete();

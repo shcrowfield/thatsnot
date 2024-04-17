@@ -12,7 +12,6 @@ class DatabaseService {
       FirebaseFirestore.instance.collection('lobbies');
 
   Future updatePlayer(Player player, int currentPlayerCount) async {
-
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
 
@@ -35,6 +34,8 @@ class DatabaseService {
     Player player3,
     Player player4,
     int isReady,
+    Map<String, dynamic> deck,
+    String activePlayer,
   ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
@@ -46,6 +47,8 @@ class DatabaseService {
       'player3': player3.toMap(),
       'player4': player4.toMap(),
       'isReady': isReady,
+      'deck': deck,
+      'activePlayer': activePlayer,
     });
   }
 }

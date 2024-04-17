@@ -5,9 +5,9 @@ class Player {
  final String name;
  final int points;
  final bool isHost;
- late Map<String, Card> cards;
+ late Map<String, Cards> cards;
 
- Player({required this.uid, required this.name, required this.points, required this.isHost, Map<String, Card>? cards}) {
+ Player({required this.uid, required this.name, required this.points, required this.isHost, Map<String, Cards>? cards}) {
   this.cards = cards ?? {};
  }
 
@@ -27,7 +27,7 @@ class Player {
    name: data['name'],
    points: data['points'],
     isHost: data['isHost'],
-   cards: Map<String, Card>.from(data['cards']),
+   cards: Map<String, Cards>.from(data['cards']),
   );
  }
 }

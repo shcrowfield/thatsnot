@@ -19,6 +19,7 @@ class _StartPageState extends State<StartPage> {
   final GoogleAuth _googleAuth = GoogleAuth();
   String nickName = '';
   late TextEditingController nickNameController;
+  String dropdownValue = 'Hun';
 
   @override
   initState() {
@@ -55,7 +56,7 @@ class _StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
-   /* Size screenSize = MediaQuery.of(context).size;
+    /* Size screenSize = MediaQuery.of(context).size;
     double containerWidth = screenSize.width * 0.5;
     double containerHeight = screenSize.height * 0.3;*/
     return Scaffold(
@@ -85,7 +86,6 @@ class _StartPageState extends State<StartPage> {
                       setState(() {});
                     }),
                   ),
-
                 ],
               ),
               Column(
@@ -128,19 +128,27 @@ class _StartPageState extends State<StartPage> {
                     style: menuButtonStyle,
                     child: Text(languageMap['Rules'] ?? ''),
                   ),
-                  Switch(
+                  DropdownButton<String>(
+                    icon: const Icon(Icons.menu),
+                    style: const TextStyle(color: Colors.deepPurple),
                     value: lang,
-                    onChanged: (value) {
+                    onChanged: (String? newValue) {
                       setState(() {
-                        lang = value;
-                        setLanguage(lang);
-                        changeLanguageMap();
+                        lang = newValue!;
+                        if (lang == 'Hun') {
+                          setLanguage('Hun');
+                        } else {
+                          setLanguage(lang);
+                        }
                       });
                     },
-                  ),
-                  Text(
-                    'Nyelv: ${lang ? 'English' : 'Magyar'}',
-                    style: const TextStyle(color: Colors.white, fontSize: 20),
+                    items: <String>['Hun', 'Eng', 'Tur']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
@@ -152,7 +160,6 @@ class _StartPageState extends State<StartPage> {
   }
 
   Widget buildSignInButton() {
-    //List<String> language = changeLanguage();
     Map<String, String> languageMap = changeLanguageMap();
     return ElevatedButton(
       onPressed: () async {
@@ -171,7 +178,6 @@ class _StartPageState extends State<StartPage> {
   }
 
   Widget buildSignOutButton() {
-    //List<String> language = changeLanguage();
     Map<String, String> languageMap = changeLanguageMap();
     return Column(
       children: [

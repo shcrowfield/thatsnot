@@ -33,19 +33,38 @@ final Map<String, String> langMapHun = {
   'Players': 'Játékosok',
   'Ready': 'Mehet'
 };
+final Map<String, String> langMapTur = {
+  'Back': 'törökVissza',
+  'CreateLobby': 'törökLobbi készítése',
+  'ActiveLobbies': 'törökAktív lobbik',
+  'Results': 'törökEredmények',
+  'SignIn': 'törökBejelentkezés',
+  'SignOut': 'törökKijelentkezés',
+  'GoogleSignOut': 'törökKijeletkezés Googleból',
+  'GoogleSignIn': 'törökGoogle bejelentkezés',
+  'Rules': 'törökSzabályok',
+  'Next': 'törökTovább',
+  'NumberOfPlayers': 'törökJátékosok száma:',
+  'LobbyName': 'törökLobbi neve',
+  'Nickname': 'törökBecenév',
+  'Players': 'törökJátékosok',
+  'Ready': 'törökMehet'
+};
 
 Map<String, String> languageMap = langMapHun;
-bool lang = false;
+String lang = 'Hun';
 
-void setLanguage(bool langValue) {
+void setLanguage(String langValue) {
   lang = langValue;
   changeLanguageMap();
 }
 
 Map<String, String> changeLanguageMap() {
-  if (lang) {
+  if (lang == 'Eng') {
     return languageMap = langMapEng;
-  } else {
+  } else if (lang == 'Tur') {
+    return languageMap = langMapTur;
+  }else {
     return languageMap = langMapHun;
   }
 }

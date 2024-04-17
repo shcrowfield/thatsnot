@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/language.dart';
+import 'package:thatsnot/models/card.dart';
 import 'package:thatsnot/pages/lobby_details_page.dart';
 import 'package:thatsnot/services/database.dart';
 import 'start_screen.dart';
@@ -34,16 +35,16 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   late Player player2;
   late Player player3;
   late Player player4;
-  bool anonym = true;
   late TextEditingController nickNameController;
   String nickName = '';
   int isReady = 0;
+  Map<String, dynamic> drawPile = createDrawPile();
+  String activePlayer = 'Player1';
 
   @override
   void initState() {
-    nickNameController = TextEditingController();
-
     super.initState();
+    nickNameController = TextEditingController();
     lobbyController = TextEditingController();
 
     player1 = Player(uid: '', name: '', points: 0, isHost: false);
@@ -203,6 +204,9 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                               player3,
                               player4,
                               isReady,
+                              drawPile.map(
+                                  (key, value) => MapEntry(key, value.toMap())),
+                              activePlayer,
                             );
                       _onLobbyDetailsPageNext();
                     },

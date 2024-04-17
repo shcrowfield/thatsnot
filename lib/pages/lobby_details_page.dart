@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thatsnot/language.dart';
 import 'package:thatsnot/lobby_manager.dart';
-import 'package:thatsnot/pages/start_screen.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/pages/game_page.dart';
+import 'package:thatsnot/pages/lobby_list_page.dart';
 
 class LobbyDetailsPage extends StatefulWidget {
   final String lobbyId;
@@ -23,22 +23,24 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
   int? currentPlayerCount;
   bool isPressed = false;
 
-  _isReadyCounter() async{
+  _isReadyCounter() async {
     var documentSnapshot = await FirebaseFirestore.instance
         .collection('lobbies')
         .doc(widget.lobbyId)
         .get();
     Map<String, dynamic>? data = documentSnapshot.data();
-    if(data?['isReady'] == data?['playerLimit']){
+    if (data?['isReady'] == data?['playerLimit']) {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (context) => const GamePage()));
       print('All players are ready');
     }
   }
 
-  _onStartNext() {
+  _onLobbyListNext() {
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const StartPage()));
+        context,
+        MaterialPageRoute(
+            builder: (context) => LobbiesListPage(user: widget.user)));
   }
 
   @override
@@ -58,8 +60,9 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
             children: [
               TextButton.icon(
                 onPressed: () {
-                  LobbyManager.checkPlayerMap(widget.lobbyId, widget.user, currentPlayerCount);
-                  _onStartNext();
+                  LobbyManager.checkPlayerMap(
+                      widget.lobbyId, widget.user, currentPlayerCount);
+                  _onLobbyListNext();
                 },
                 icon: const Icon(Icons.arrow_back),
                 label: Text(languageMap['Back'] ?? ''),
