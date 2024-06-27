@@ -6,6 +6,7 @@ import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/pages/game_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
+import 'package:thatsnot/services/database.dart';
 
 class LobbyDetailsPage extends StatefulWidget {
   final String lobbyId;
@@ -121,6 +122,12 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                                   });
                                 });
                           _isReadyCounter();
+                          DatabaseService(lobbyId: lobby['lobbyId'])
+                              .updateDeck();
+                          DatabaseService(lobbyId: lobby['lobbyId'])
+                              .dealCards();
+                          DatabaseService(lobbyId: lobby['lobbyId'])
+                              .updateDrawPile();
                         },
                         style: isPressed ? choosedButtonStyle : menuButtonStyle,
                         child: Text(languageMap['Ready'] ?? ''),

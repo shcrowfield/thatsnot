@@ -181,7 +181,7 @@ class _StartPageState extends State<StartPage> {
     Map<String, String> languageMap = changeLanguageMap();
     return Column(
       children: [
-        Text("User ID: ${user!.uid}"),
+        //Text("User ID: ${user!.uid}"),
         ElevatedButton(
           onPressed: () async {
             await FirebaseAuth.instance.signOut();

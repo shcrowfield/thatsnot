@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:thatsnot/models/card.dart';
 import 'package:thatsnot/pages/start_screen.dart';
+
+
 class GamePage extends StatefulWidget {
   const GamePage({super.key});
 
@@ -45,7 +46,7 @@ class _GamePageState extends State<GamePage> {
               child: Container(
                 color: Colors.white,
                 child: const Center(
-                  child: ElevatedButton(onPressed: shuffleCards, child: Text('kevert kártyák'))
+                  child: ElevatedButton(onPressed: null, child: Text('kevert kártyák'))
                 ),
               ),
             ),

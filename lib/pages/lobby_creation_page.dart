@@ -38,7 +38,9 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   late TextEditingController nickNameController;
   String nickName = '';
   int isReady = 0;
-  Map<String, dynamic> drawPile = createDrawPile();
+  Map<String, Cards> drawPile = {};
+  Map<String, Cards> discardPile = {};
+  Map<String, Cards> deck = {};
   String activePlayer = 'Player1';
 
   @override
@@ -204,8 +206,9 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                               player3,
                               player4,
                               isReady,
-                              drawPile.map(
-                                  (key, value) => MapEntry(key, value.toMap())),
+                              drawPile,
+                              discardPile,
+                              deck,
                               activePlayer,
                             );
                       _onLobbyDetailsPageNext();
