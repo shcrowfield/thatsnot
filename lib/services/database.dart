@@ -117,6 +117,17 @@ class DatabaseService {
     }
   }
 
+  Future updateLies(String liedColor, int liedNumber, MapEntry<String, dynamic> choosedcard) async {
+    final choosedcardMap = {
+      choosedcard.key: choosedcard.value,
+    };
+    return await lobbyCollection.doc(lobbyId).update({
+      'liedColor': liedColor,
+      'liedNumber': liedNumber,
+      'choosedCard': choosedcardMap,
+    });
+  }
+
   Future updateLobbyData(
     String lobbyName,
     int playerLimit,
@@ -130,6 +141,9 @@ class DatabaseService {
     Map<String, dynamic> discardPile,
     Map<String, dynamic> deck,
     String activePlayer,
+      String liedColor,
+      int liedNumber,
+      Map<String, dynamic> choosedCard,
   ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
@@ -145,6 +159,9 @@ class DatabaseService {
       'discardPile': discardPile,
       'deck': deck,
       'activePlayer': activePlayer,
+      'liedColor': liedColor,
+      'liedNumber': liedNumber,
+      'choosedCard': choosedCard,
     });
   }
 }

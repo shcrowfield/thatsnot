@@ -26,14 +26,17 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 
-  bool _isLobbyFull(int currentPlayerCount, int playerLimit) {
-    if (currentPlayerCount < playerLimit) {
-      return false;
-    } else {
-      return true;
+  String _allowToJoin(int currentPlayerCount, int playerLimit,
+      String NickName) {
+    if (currentPlayerCount < playerLimit && NickName.isNotEmpty) {
+      return languageMap['Allow to Enter'] ?? "";
+    }
+    else if(currentPlayerCount < playerLimit && NickName.isEmpty) {
+      return languageMap['EnterNickname'] ?? "";
+    }else {
+    return languageMap['LobbyIsFull'] ?? "";
     }
   }
-
 
   @override
   void initState() {
@@ -103,41 +106,44 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                         title: Text(document['lobbyName'],
                             style: const TextStyle(color: Colors.white)),
                         subtitle: Text(
-                            "${document['currentPlayerCount']} / ${document['playerLimit']} players ${_isLobbyFull(document['currentPlayerCount'], document['playerLimit']) ? 'Full' : 'Not Full'}",
+                            "${document['currentPlayerCount']} / ${document['playerLimit']} players ${_allowToJoin(
+                                document['currentPlayerCount'],
+                                document['playerLimit'], nickName)}",
                             style: const TextStyle(color: Colors.white)),
                         onTap: () async {
-                          _isLobbyFull(document['currentPlayerCount'],
-                                  document['playerLimit'])
+                          _allowToJoin(document['currentPlayerCount'],
+                              document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? player = Player(
-                                  name: '',
-                                  points: 0,
-                                  uid: '',
-                                  isHost: false,
-                                )
+                            name: '',
+                            points: 0,
+                            uid: '',
+                            isHost: false,
+                          )
                               : player = Player(
-                                  name: nickName,
-                                  points: 0,
-                                  uid: widget.user!.uid,
-                                  isHost: false,
-                                );
-                          _isLobbyFull(document['currentPlayerCount'],
-                                  document['playerLimit'])
+                            name: nickName,
+                            points: 0,
+                            uid: widget.user!.uid,
+                            isHost: false,
+                          );
+                          _allowToJoin(document['currentPlayerCount'],
+                              document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? null
                               : await DatabaseService(lobbyId: document.id)
-                                  .updatePlayer(
-                                      player, document['currentPlayerCount']);
-                          _isLobbyFull(document['currentPlayerCount'],
-                                  document['playerLimit'])
+                              .updatePlayer(
+                              player, document['currentPlayerCount']);
+                          _allowToJoin(document['currentPlayerCount'],
+                              document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? null
                               : Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LobbyDetailsPage(
-                                        lobbyId: document.id,
-                                        user: widget.user,
-                                        nickName: nickName),
-                                  ),
-                                );
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  LobbyDetailsPage(
+                                      lobbyId: document.id,
+                                      user: widget.user,
+                                      nickName: nickName),
+                            ),
+                          );
                         },
                       );
                     }).toList(),

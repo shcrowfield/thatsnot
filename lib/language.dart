@@ -12,8 +12,11 @@ final Map<String, String> langMapEng = {
   'NumberOfPlayers': 'Number of players:',
   'LobbyName': 'Lobby name',
   'Nickname': 'Nickname',
+  'EnterNickname': 'Enter a nickname',
   'Players': 'Players',
-  'Ready': 'Ready'
+  'Ready': 'Ready',
+  'Allow to Enter': 'Allow to Enter',
+  'LobbyIsFull': 'Lobby is Full'
 };
 
 final Map<String, String> langMapHun = {
@@ -30,8 +33,11 @@ final Map<String, String> langMapHun = {
   'NumberOfPlayers': 'Játékosok száma:',
   'LobbyName': 'Lobbi neve',
   'Nickname': 'Becenév',
+  'EnterNickname': 'Adj meg egy Becenévet',
   'Players': 'Játékosok',
-  'Ready': 'Mehet'
+  'Ready': 'Mehet',
+  'Allow to Enter': 'Beléphet',
+  'LobbyIsFull': 'A lobbi megtelt'
 };
 final Map<String, String> langMapTur = {
   'Back': 'törökVissza',
@@ -47,8 +53,11 @@ final Map<String, String> langMapTur = {
   'NumberOfPlayers': 'törökJátékosok száma:',
   'LobbyName': 'törökLobbi neve',
   'Nickname': 'törökBecenév',
+  'EnterNickname': 'Adj meg egy törökBecenevet',
   'Players': 'törökJátékosok',
-  'Ready': 'törökMehet'
+  'Ready': 'törökMehet',
+  'Allow to Enter': 'törökBeléphet',
+  'LobbyIsFull': 'törökTele'
 };
 
 Map<String, String> languageMap = langMapHun;

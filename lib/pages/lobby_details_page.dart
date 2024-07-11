@@ -32,7 +32,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     Map<String, dynamic>? data = documentSnapshot.data();
     if (data?['isReady'] == data?['playerLimit']) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => const GamePage()));
+          context, MaterialPageRoute(builder: (context) => GamePage( lobbyId: widget.lobbyId, user: widget.user)));
       print('All players are ready');
     }
   }
