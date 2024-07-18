@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/alert_dialogs.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
@@ -31,7 +32,24 @@ class _GamePageState extends State<GamePage> {
     return lobby;
   }
 
-  bool _compareColor(String choosedColor, String liedColor) {
+  /*getPlayerKey(String uid) async {
+    var lobby = await _getLobbyData();
+    Map<String, dynamic> player1 = lobby['player1'];
+    Map<String, dynamic> player2 = lobby['player2'];
+    Map<String, dynamic> player3 = lobby['player3'];
+    Map<String, dynamic> player4 = lobby['player4'];
+    if (player1['uid'] == uid) {
+      return 'player1';
+    } else if (player2['uid'] == uid) {
+      return 'player2';
+    } else if (player3['uid'] == uid) {
+      return 'player3';
+    } else if (player4['uid'] == uid) {
+      return 'player4';
+    }
+  }*/
+
+  bool compareColor(String choosedColor, String liedColor) {
     if ((choosedColor == liedColor) || (choosedColor == 'Color 1-9')) {
       return true;
     } else {
@@ -39,7 +57,7 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  bool _compareNumber(int choosedNumber, int liedNumber) {
+  bool compareNumber(int choosedNumber, int liedNumber) {
     if (choosedNumber == liedNumber || choosedNumber == 0) {
       return true;
     } else {
@@ -47,7 +65,7 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  _onStartNext() {
+  onStartNext() {
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
@@ -65,6 +83,55 @@ class _GamePageState extends State<GamePage> {
     return playerCards;
   }
 
+  Future<bool> playerIsActive(String uid) async {
+    var lobby = await _getLobbyData();
+    String activePlayer = lobby['activePlayer'];
+    if (activePlayer == uid) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  buttonIsAcive() async {
+    var lobby = await _getLobbyData();
+    Map<String, dynamic> choosedCard = lobby['choosedCard'];
+    String choosedColor = choosedCard.values.first['color'];
+    bool colorMatch = compareColor(choosedColor, lobby['liedColor']);
+
+    int choosedNumber = choosedCard.values.first['number'];
+    bool numberMatch = compareNumber(choosedNumber, lobby['liedNumber']);
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+              title: const Text('Miben hazudott?'),
+              content: Row(
+                children: [
+                  ElevatedButton(
+                      onPressed: () async {
+                        colorMatch ? print('Igaz Szín') : print('hamis szín');
+                        Navigator.pop(context);
+                        await DatabaseService(lobbyId: widget.lobbyId)
+                            .incresePassCount();
+                        await DatabaseService(lobbyId: widget.lobbyId)
+                            .checkActivePlayer();
+                      },
+                      child: Text('Nem ${lobby['liedColor']}')),
+                  ElevatedButton(
+                      onPressed: () async {
+                        numberMatch ? print('Igaz szám') : print('hamis szám');
+                        Navigator.pop(context);
+                        await DatabaseService(lobbyId: widget.lobbyId)
+                            .incresePassCount();
+                        await DatabaseService(lobbyId: widget.lobbyId)
+                            .checkActivePlayer();
+                      },
+                      child: Text('Nem ${lobby['liedNumber']}')),
+                ],
+              ),
+            ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,7 +143,7 @@ class _GamePageState extends State<GamePage> {
               style: TextStyle(color: Colors.white, fontSize: 24)),
           TextButton.icon(
             onPressed: () {
-              _onStartNext();
+              onStartNext();
             },
             icon: const Icon(Icons.arrow_back),
             label: const Text('Back'),
@@ -92,42 +159,9 @@ class _GamePageState extends State<GamePage> {
                 children: [
                   ElevatedButton(
                       onPressed: () async {
-                        var lobby = await _getLobbyData();
-                        Map<String, dynamic> choosedCard = lobby['choosedCard'];
-                        String choosedColor = choosedCard.values.first['color'];
-                        bool colorMatch =
-                            _compareColor(choosedColor, lobby['liedColor']);
-
-                        int choosedNumber = choosedCard.values.first['number'];
-                        bool numberMatch =
-                            _compareNumber(choosedNumber, lobby['liedNumber']);
-                        showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                                  title: const Text('Miben hazudott?'),
-                                  content: Row(
-                                    children: [
-                                      ElevatedButton(
-                                          onPressed: () {
-                                            colorMatch
-                                                ? print('Igaz Szín')
-                                                : print('hamis szín');
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text(
-                                              'Nem ${lobby['liedColor']}')),
-                                      ElevatedButton(
-                                          onPressed: () {
-                                            numberMatch
-                                                ? print('Igaz szám')
-                                                : print('hamis szám');
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text(
-                                              'Nem ${lobby['liedNumber']}')),
-                                    ],
-                                  ),
-                                ));
+                        await playerIsActive(widget.user!.uid)
+                            ? print('Te vagy az aktív játékos')
+                            : buttonIsAcive();
                       },
                       child: const Text('LIE')),
                   Expanded(
@@ -159,7 +193,9 @@ class _GamePageState extends State<GamePage> {
                                       print('Válaszott kártya: $choosedCard');
                                       showDialog(
                                           context: context,
-                                          builder: (context) => AlertDialog(
+                                          builder: (context) =>
+                                              //LieDialog(lobbyId: widget.lobbyId)
+                                              AlertDialog(
                                                 title: const Text(
                                                     'Milyen kártya ez?'),
                                                 content: Row(
@@ -246,10 +282,25 @@ class _GamePageState extends State<GamePage> {
                                                                     liedNumber,
                                                                     choosedCard);
                                                             setState(() {
-                                                              userCards.remove(choosedCard.key);
+                                                              DatabaseService(
+                                                                      lobbyId:
+                                                                          widget
+                                                                              .lobbyId)
+                                                                  .moveToDiscardPile(
+                                                                      choosedCard,
+                                                                      widget
+                                                                          .user!);
                                                             });
                                                             Navigator.pop(
                                                                 context);
+                                                            await DatabaseService(
+                                                                    lobbyId: widget
+                                                                        .lobbyId)
+                                                                .incresePassCount();
+                                                            await DatabaseService(
+                                                                    lobbyId: widget
+                                                                        .lobbyId)
+                                                                .checkActivePlayer();
                                                           },
                                                           child:
                                                               const Text('OK'))
@@ -270,6 +321,24 @@ class _GamePageState extends State<GamePage> {
                         return const Text('Üres a kezed');
                       },
                     ),
+                  ),
+                  Column(
+                    children: [
+                      ElevatedButton(
+                          onPressed: () async {
+                            await DatabaseService(lobbyId: widget.lobbyId)
+                                .incresePassCount();
+                            await DatabaseService(lobbyId: widget.lobbyId)
+                                .checkActivePlayer();
+                          },
+                          child: const Text('PASSZ')),
+                      ElevatedButton(
+                          onPressed: () async {
+                            await DatabaseService(lobbyId: widget.lobbyId)
+                                .drawCard();
+                          },
+                          child: const Text('DRAW')),
+                    ],
                   ),
                 ],
               )),

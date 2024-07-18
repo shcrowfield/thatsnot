@@ -41,10 +41,11 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   Map<String, Cards> drawPile = {};
   Map<String, Cards> discardPile = {};
   Map<String, Cards> deck = {};
-  String activePlayer = 'Player1';
+  String activePlayer = '';
   String liedColor = '';
   int liedNumber = 0;
   Map<String, dynamic> choosedCard = {};
+  int passCount = 0;
 
   @override
   void initState() {
@@ -52,10 +53,10 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
     nickNameController = TextEditingController();
     lobbyController = TextEditingController();
 
-    player1 = Player(uid: '', name: '', points: 0, isHost: false);
-    player2 = Player(uid: '', name: '', points: 0, isHost: false);
-    player3 = Player(uid: '', name: '', points: 0, isHost: false);
-    player4 = Player(uid: '', name: '', points: 0, isHost: false);
+    player1 = Player(uid: '', name: '', points: 0, isActive: false);
+    player2 = Player(uid: '', name: '', points: 0, isActive: false);
+    player3 = Player(uid: '', name: '', points: 0, isActive: false);
+    player4 = Player(uid: '', name: '', points: 0, isActive: false);
   }
 
   @override
@@ -214,7 +215,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                                     uid: widget.user!.uid,
                                     name: nickName,
                                     points: 0,
-                                    isHost: true),
+                                    isActive: true),
                                 player2,
                                 player3,
                                 player4,
@@ -222,10 +223,11 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                                 drawPile,
                                 discardPile,
                                 deck,
-                                activePlayer,
+                                activePlayer = widget.user!.uid,
                                 liedColor,
                                 liedNumber,
                                 choosedCard,
+                                passCount,
                               );
                         _onLobbyDetailsPageNext();
                       },

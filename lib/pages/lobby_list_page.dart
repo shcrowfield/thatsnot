@@ -117,13 +117,13 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                             name: '',
                             points: 0,
                             uid: '',
-                            isHost: false,
+                            isActive: false,
                           )
                               : player = Player(
                             name: nickName,
                             points: 0,
                             uid: widget.user!.uid,
-                            isHost: false,
+                            isActive: false,
                           );
                           _allowToJoin(document['currentPlayerCount'],
                               document['playerLimit'], nickName) != languageMap['Allow to Enter']

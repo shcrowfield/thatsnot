@@ -4,10 +4,10 @@ class Player {
  final String uid;
  final String name;
  final int points;
- final bool isHost;
+ final bool isActive;
  late Map<String, Cards> cards;
 
- Player({required this.uid, required this.name, required this.points, required this.isHost, Map<String, Cards>? cards}) {
+ Player({required this.uid, required this.name, required this.points, required this.isActive, Map<String, Cards>? cards}) {
   this.cards = cards ?? {};
  }
 
@@ -16,7 +16,7 @@ class Player {
    'uid': uid,
    'name': name,
    'points': points,
-    'isHost': isHost,
+    'isActive': isActive,
    'cards': cards.map((key, card) => MapEntry(key, card.toMap())),
   };
  }
@@ -26,7 +26,7 @@ class Player {
    uid: data['uid'],
    name: data['name'],
    points: data['points'],
-    isHost: data['isHost'],
+    isActive: data['isActive'],
    cards: Map<String, Cards>.from(data['cards']),
   );
  }
