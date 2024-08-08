@@ -46,6 +46,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   int liedNumber = 0;
   Map<String, dynamic> choosedCard = {};
   int passCount = 0;
+  String oppoentId = '';
 
   @override
   void initState() {
@@ -228,13 +229,14 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                                 liedNumber,
                                 choosedCard,
                                 passCount,
+                                oppoentId,
                               );
                         _onLobbyDetailsPageNext();
                       },
                       style: lobbyName == ''
                           ? menuButtonStyle.copyWith(
                               backgroundColor:
-                                  MaterialStateProperty.all(Colors.white38))
+                                  WidgetStateProperty.all(Colors.white38))
                           : menuButtonStyle,
                       child: Text(languageMap['Next'] ?? ''),
                     ),

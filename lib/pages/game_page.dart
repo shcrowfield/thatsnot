@@ -30,37 +30,12 @@ class _GamePageState extends State<GamePage> {
     return lobby;
   }
 
-  /*getPlayerKey(String uid) async {
-    var lobby = await _getLobbyData();
-    Map<String, dynamic> player1 = lobby['player1'];
-    Map<String, dynamic> player2 = lobby['player2'];
-    Map<String, dynamic> player3 = lobby['player3'];
-    Map<String, dynamic> player4 = lobby['player4'];
-    if (player1['uid'] == uid) {
-      return 'player1';
-    } else if (player2['uid'] == uid) {
-      return 'player2';
-    } else if (player3['uid'] == uid) {
-      return 'player3';
-    } else if (player4['uid'] == uid) {
-      return 'player4';
-    }
-  }*/
-
   bool compareColor(String choosedColor, String liedColor) {
-    if ((choosedColor == liedColor) || (choosedColor == 'Color 1-9')) {
-      return true;
-    } else {
-      return false;
-    }
+    return choosedColor == liedColor || choosedColor == 'Color 1-9';
   }
 
   bool compareNumber(int choosedNumber, int liedNumber) {
-    if (choosedNumber == liedNumber || choosedNumber == 0) {
-      return true;
-    } else {
-      return false;
-    }
+    return choosedNumber == liedNumber || choosedNumber == 0;
   }
 
   onStartNext() {
@@ -84,14 +59,11 @@ class _GamePageState extends State<GamePage> {
   Future<bool> playerIsActive(String uid) async {
     var lobby = await _getLobbyData();
     String activePlayer = lobby['activePlayer'];
-    if (activePlayer == uid) {
-      return true;
-    } else {
-      return false;
-    }
+    return activePlayer == uid;
   }
 
-  buttonIsAcive() async {
+  void buttonIsAcive() async {
+    DatabaseService(lobbyId: widget.lobbyId).updateOpponentId(widget.user!.uid);
     var lobby = await _getLobbyData();
     Map<String, dynamic> choosedCard = lobby['choosedCard'];
     String choosedColor = choosedCard.values.first['color'];
@@ -106,38 +78,54 @@ class _GamePageState extends State<GamePage> {
             colorMatch: colorMatch,
             numberMatch: numberMatch));
   }
+
+  void reBuild() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple,
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           const SizedBox(height: 15),
-          const Text('Game Page',
-              style: TextStyle(color: Colors.white, fontSize: 24)),
           TextButton.icon(
             onPressed: () {
               onStartNext();
             },
-            icon: const Icon(Icons.arrow_back),
-            label: const Text('Back'),
+            icon: const Icon(Icons.settings),
+            label: const Text('Menu'),
             style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
+              foregroundColor: Colors.deepPurple,
             ),
           ),
           Expanded(
+              child: ElevatedButton(
+                  onPressed: () async {
+                    await DatabaseService(lobbyId: widget.lobbyId).drawCard();
+                  },
+                  child: const Text('DRAW'))),
+          Expanded(
+            //alignment: Alignment.bottomCenter,
             child: Container(
-              color: Colors.white,
+              color: Colors.deepOrangeAccent,
               child: Center(
                   child: Row(
                 children: [
-                  ElevatedButton(
-                      onPressed: () async {
-                        await playerIsActive(widget.user!.uid)
-                            ? print('Te vagy az aktív játékos')
-                            : buttonIsAcive();
-                      },
-                      child: const Text('LIE')),
+                  Column(
+                    children: [
+                      ElevatedButton(
+                          onPressed: reBuild, child: const Text('Ossz')),
+                      ElevatedButton(
+                          onPressed: () async {
+                            await playerIsActive(widget.user!.uid)
+                                ? print('Te vagy az aktív játékos')
+                                : buttonIsAcive();
+                          },
+                          child: const Text('LIE')),
+                    ],
+                  ),
                   Expanded(
                     child: FutureBuilder<Map<String, dynamic>?>(
                       future: getCards(widget.user!.uid),
@@ -171,10 +159,15 @@ class _GamePageState extends State<GamePage> {
                                                 choosedCard: choosedCard,
                                               ));
                                     },
-                                    child: Text(
-                                      cardList[index].key.toString(),
-                                      style: const TextStyle(
-                                          color: Colors.black, fontSize: 24),
+                                    child: Card(
+                                      child: Column(
+                                        children: [
+                                          Text(cardList[index].value['color']),
+                                          Text(cardList[index]
+                                              .value['number']
+                                              .toString()),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );
@@ -196,12 +189,6 @@ class _GamePageState extends State<GamePage> {
                                 .checkActivePlayer();
                           },
                           child: const Text('PASSZ')),
-                      ElevatedButton(
-                          onPressed: () async {
-                            await DatabaseService(lobbyId: widget.lobbyId)
-                                .drawCard();
-                          },
-                          child: const Text('DRAW')),
                     ],
                   ),
                 ],

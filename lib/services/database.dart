@@ -170,6 +170,12 @@ class DatabaseService {
     });
   }
 
+  Future updateOpponentId(String opponentId) async {
+    return await lobbyCollection.doc(lobbyId).update({
+      'opponentId': opponentId,
+    });
+  }
+
   Future moveToDiscardPile(
       MapEntry<String, dynamic> choosedCard, User user) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
@@ -251,6 +257,7 @@ class DatabaseService {
     int liedNumber,
     Map<String, dynamic> choosedCard,
     int passCount,
+      String oppoentId,
   ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
@@ -270,6 +277,7 @@ class DatabaseService {
       'liedNumber': liedNumber,
       'choosedCard': choosedCard,
       'passCount': passCount,
+      'opponentId': oppoentId,
     });
   }
 }

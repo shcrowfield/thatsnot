@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thatsnot/language.dart';
@@ -32,7 +33,10 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     Map<String, dynamic>? data = documentSnapshot.data();
     if (data?['isReady'] == data?['playerLimit']) {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => GamePage( lobbyId: widget.lobbyId, user: widget.user)));
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  GamePage(lobbyId: widget.lobbyId, user: widget.user)));
       print('All players are ready');
     }
   }
@@ -50,6 +54,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
       backgroundColor: Colors.deepPurple,
       body: SingleChildScrollView(
         child: Container(
+          height: MediaQuery.of(context).size.height,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -79,61 +84,64 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
-                  }
-                  var lobby = snapshot.data!;
-                  currentPlayerCount = lobby['currentPlayerCount'];
-                  return Column(
-                    children: [
-                      // Display lobby details
-                      ListTile(
-                        title: Text(languageMap['LobbyName'] ?? ''),
-                        subtitle: Text(lobby['lobbyName']),
-                      ),
-                      ListTile(
-                        title: Text(languageMap['Players'] ?? ''),
-                        subtitle: Text(
-                            "${lobby['currentPlayerCount']} / ${lobby['playerLimit']}"),
-                      ),
-                      // Display list of users
-                      for (int i = 1; i <= 4; i++)
-                        if (lobby['player$i'] != null)
-                          Column(
-                            children: [
-                              Text(languageMap['Player'] ?? '',
-                                  style: const TextStyle(
-                                      backgroundColor: Colors.white,
-                                      fontSize: 20)),
-                              Text(
-                                lobby['player$i']['name'],
-                                style: const TextStyle(
-                                    backgroundColor: Colors.white,
-                                    fontSize: 20),
-                              ),
-                            ],
+                  } else {
+                    var lobby = snapshot.data!;
+                    currentPlayerCount = lobby['currentPlayerCount'];
+                    return Column(
+                      children: [
+                        ListTile(
+                          title: Text(languageMap['LobbyName'] ?? ''),
+                          subtitle: Text(lobby['lobbyName']),
+                        ),
+                        ListTile(
+                          title: Text(languageMap['Players'] ?? ''),
+                          subtitle: Text(
+                              "${lobby['currentPlayerCount']} / ${lobby['playerLimit']}"),
+                        ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(currentPlayerCount!, (index) {
+                              int playerIndex = index + 1;
+                              return lobby['player$playerIndex'] != null
+                                  ? Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person, color: Colors.white),
+                                    SizedBox(width: 5),
+                                    Text(
+                                      lobby['player$playerIndex']['name'],
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              )
+                                  : Container();
+                            }),
                           ),
-                      ElevatedButton(
-                        onPressed: () {
-                          isPressed
-                              ? null
-                              : setState(() {
-                                  isPressed = true;
-                                  lobby.reference.update({
-                                    'isReady': FieldValue.increment(1),
-                                  });
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (!isPressed) {
+                              setState(() {
+                                isPressed = true;
+                                lobby.reference.update({
+                                  'isReady': FieldValue.increment(1),
                                 });
-                          _isReadyCounter();
-                          DatabaseService(lobbyId: lobby['lobbyId'])
-                              .updateDeck();
-                          DatabaseService(lobbyId: lobby['lobbyId'])
-                              .dealCards();
-                          DatabaseService(lobbyId: lobby['lobbyId'])
-                              .updateDrawPile();
-                        },
-                        style: isPressed ? choosedButtonStyle : menuButtonStyle,
-                        child: Text(languageMap['Ready'] ?? ''),
-                      ),
-                    ],
-                  );
+                              });
+                              _isReadyCounter();
+                              DatabaseService(lobbyId: lobby['lobbyId']).updateDeck();
+                              DatabaseService(lobbyId: lobby['lobbyId']).dealCards();
+                              DatabaseService(lobbyId: lobby['lobbyId']).updateDrawPile();
+                            }
+                          },
+                          style: isPressed ? choosedButtonStyle : menuButtonStyle,
+                          child: Text(languageMap['Ready'] ?? ''),
+                        ),
+                      ],
+                    );
+                  }
                 },
               ),
             ],

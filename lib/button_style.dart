@@ -28,3 +28,12 @@ final ButtonStyle unchoosedButtonStyle = ElevatedButton.styleFrom(
   foregroundColor: Colors.black,
 );
 
+final ButtonStyle gameButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.white,
+  foregroundColor: Colors.purple,
+);
+final ButtonStyle diabledGameButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.white38,
+  foregroundColor: Colors.black,
+);
+
