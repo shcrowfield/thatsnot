@@ -90,7 +90,7 @@ class DatabaseService {
     Map<String, dynamic> updatedDrawPile = {};
     int pileCount = 0;
     int count = 0;
-    lobby?['playerLimit'] == 2 ? pileCount = 45 : pileCount = 65;
+    lobby?['playerLimit'] == 2 ? pileCount = /*45*/20 : pileCount = 65;
 
     deck.forEach((key, value) {
       if (count < pileCount) {
@@ -139,8 +139,19 @@ class DatabaseService {
           'player${i + 1}.cards': playerCards,
           'drawPile': sortedDrawPile,
         });
+        drawPileIsEmpty();
         break;
       }
+    }
+  }
+
+  Future drawPileIsEmpty() async {
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    var documentSnapshot = returnMap['documentSnapshot'];
+    Map<String, dynamic>? lobby = documentSnapshot.data();
+    Map<String, dynamic>? drawPile = lobby?['drawPile'];
+    if(drawPile!.isEmpty) {
+      print('Vége a Játéknak');
     }
   }
 
@@ -175,6 +186,38 @@ class DatabaseService {
       'opponentId': opponentId,
     });
   }
+
+  Future increseWinnerPoints(String id) async {
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
+    for (int i = 0; i < players.length; i++) {
+      if (players[i]['uid'] == id) {
+        return await lobbyCollection.doc(lobbyId).update({
+          'player${i + 1}.points': FieldValue.increment(lobby['discardPile'].length),
+          'discardPile': {},
+        });
+      }
+    }
+  }
+
+  Future drawForLoser(String id) async {
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
+    Map<String, Map<String, dynamic>> drawPile = lobby['drawPile'];
+    Map<String, Map<String, dynamic>> loserCards = {};
+    for (int i = 0; i < players.length; i++) {
+      if (players[i]['uid'] == id) {
+        loserCards = players[i]['cards'];
+        Map<String, Map<String, dynamic>> drawnCards = Map.fromEntries(drawPile.entries.take(2));
+        loserCards.addAll(drawnCards);
+        drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
+        }
+      }
+    }
+
+
 
   Future moveToDiscardPile(
       MapEntry<String, dynamic> choosedCard, User user) async {
