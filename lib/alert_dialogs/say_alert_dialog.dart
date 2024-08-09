@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/countdown.dart';
 import 'package:thatsnot/services/database.dart';
+import 'package:timer_count_down/timer_controller.dart';
+import 'package:timer_count_down/timer_count_down.dart';
 
 class SayAlertDialog extends StatefulWidget {
   final String lobbyId;
@@ -18,7 +21,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
   String liedColor = '';
   int liedNumber = 0;
   String liedCard = '';
-
+  final CountdownController _controller = CountdownController(autoStart: false);
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -81,6 +84,8 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       widget.user!,
                     );
                   });
+                  /*CountDown(controller: _controller);
+                  _controller.start();*/
                   Navigator.pop(context);
                   await DatabaseService(lobbyId: widget.lobbyId)
                       .incresePassCount();

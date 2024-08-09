@@ -1,11 +1,13 @@
+// lib/pages/game_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/lie_alert_dialog.dart';
 import 'package:thatsnot/alert_dialogs/say_alert_dialog.dart';
+import 'package:thatsnot/countdown.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
-
+import 'package:timer_count_down/timer_controller.dart';
 import '../lobby_manager.dart';
 
 class GamePage extends StatefulWidget {
@@ -19,6 +21,8 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
+  final CountdownController _controller = CountdownController(autoStart: false);
+
   MapEntry<String, dynamic> choosedCard = const MapEntry('', '');
 
   _getLobbyData() async {
@@ -45,7 +49,7 @@ class _GamePageState extends State<GamePage> {
 
   Future<Map<String, dynamic>?> getCards(String uid) async {
     Map<String, dynamic> returnMap =
-        await LobbyManager.getPlayersList(widget.lobbyId);
+    await LobbyManager.getPlayersList(widget.lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic>? playerCards = {};
     for (int i = 0; i < players.length; i++) {
@@ -101,98 +105,106 @@ class _GamePageState extends State<GamePage> {
             ),
           ),
           Expanded(
-              child: ElevatedButton(
-                  onPressed: () async {
-                    await DatabaseService(lobbyId: widget.lobbyId).drawCard();
-                  },
-                  child: const Text('DRAW'))),
+              child: Column(
+                children: [
+                  CountDown(controller: _controller),
+                  ElevatedButton(
+                      onPressed: () => _controller.start(),
+                      child: const Text('start')),
+                  ElevatedButton(
+                      onPressed: () async {
+                        await DatabaseService(lobbyId: widget.lobbyId).drawCard();
+                      },
+                      child: const Text('DRAW')),
+                ],
+              )),
           Expanded(
             //alignment: Alignment.bottomCenter,
             child: Container(
               color: Colors.deepOrangeAccent,
               child: Center(
                   child: Row(
-                children: [
-                  Column(
                     children: [
-                      ElevatedButton(
-                          onPressed: reBuild, child: const Text('Ossz')),
-                      ElevatedButton(
-                          onPressed: () async {
-                            await playerIsActive(widget.user!.uid)
-                                ? print('Te vagy az aktív játékos')
-                                : buttonIsAcive();
-                          },
-                          child: const Text('LIE')),
-                    ],
-                  ),
-                  Expanded(
-                    child: FutureBuilder<Map<String, dynamic>?>(
-                      future: getCards(widget.user!.uid),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        } else if (snapshot.hasError) {
-                          return Text('Error: ${snapshot.error}');
-                        } else if (snapshot.hasData) {
-                          Map<String, dynamic> userCards = snapshot.data!;
-                          List<MapEntry<String, dynamic>> cardList =
+                      Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: reBuild, child: const Text('Ossz')),
+                          ElevatedButton(
+                              onPressed: () async {
+                                await playerIsActive(widget.user!.uid)
+                                    ? print('Te vagy az aktív játékos')
+                                    : buttonIsAcive();
+                              },
+                              child: const Text('LIE')),
+                        ],
+                      ),
+                      Expanded(
+                        child: FutureBuilder<Map<String, dynamic>?>(
+                          future: getCards(widget.user!.uid),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (snapshot.hasData) {
+                              Map<String, dynamic> userCards = snapshot.data!;
+                              List<MapEntry<String, dynamic>> cardList =
                               userCards.entries.toList();
-                          return SizedBox(
-                            width: double.infinity,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: cardList.length,
-                              itemBuilder: (context, index) {
-                                return SizedBox(
-                                  width: MediaQuery.of(context).size.width /
-                                      cardList.length,
-                                  child: InkWell(
-                                    onTap: () {
-                                      choosedCard = cardList[index];
-                                      showDialog(
-                                          context: context,
-                                          builder: (context) => SayAlertDialog(
+                              return SizedBox(
+                                width: double.infinity,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: cardList.length,
+                                  itemBuilder: (context, index) {
+                                    return SizedBox(
+                                      width: MediaQuery.of(context).size.width /
+                                          cardList.length,
+                                      child: InkWell(
+                                        onTap: () {
+                                          choosedCard = cardList[index];
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) => SayAlertDialog(
                                                 lobbyId: widget.lobbyId,
                                                 user: widget.user,
                                                 choosedCard: choosedCard,
                                               ));
-                                    },
-                                    child: Card(
-                                      child: Column(
-                                        children: [
-                                          Text(cardList[index].value['color']),
-                                          Text(cardList[index]
-                                              .value['number']
-                                              .toString()),
-                                        ],
+                                        },
+                                        child: Card(
+                                          child: Column(
+                                            children: [
+                                              Text(cardList[index].value['color']),
+                                              Text(cardList[index]
+                                                  .value['number']
+                                                  .toString()),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        }
-                        return const Text('Üres a kezed');
-                      },
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      ElevatedButton(
-                          onPressed: () async {
-                            await DatabaseService(lobbyId: widget.lobbyId)
-                                .incresePassCount();
-                            await DatabaseService(lobbyId: widget.lobbyId)
-                                .checkActivePlayer();
+                                    );
+                                  },
+                                ),
+                              );
+                            }
+                            return const Text('Üres a kezed');
                           },
-                          child: const Text('PASSZ')),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: () async {
+                                await DatabaseService(lobbyId: widget.lobbyId)
+                                    .incresePassCount();
+                                await DatabaseService(lobbyId: widget.lobbyId)
+                                    .checkActivePlayer();
+                              },
+                              child: const Text('PASSZ')),
+                        ],
+                      ),
                     ],
-                  ),
-                ],
-              )),
+                  )),
             ),
           ),
         ],
