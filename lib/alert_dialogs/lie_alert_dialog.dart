@@ -27,11 +27,17 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
         children: [
           ElevatedButton(
               onPressed: () async {
-                widget.colorMatch
-                    ? DatabaseService(lobbyId: widget.lobbyId)
-                        .increseWinnerPoints(widget.lobby['activePlayer'])
-                    : DatabaseService(lobbyId: widget.lobbyId)
-                        .increseWinnerPoints(widget.lobby['opponentId']);
+                if (widget.colorMatch) {
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .increseWinnerPoints(widget.lobby['lastCardPlayer']);
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .drawForLoser(widget.lobby['opponentId']);
+                } else {
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .increseWinnerPoints(widget.lobby['opponentId']);
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .drawForLoser(widget.lobby['lastCardPlayer']);
+                }
                 Navigator.pop(context);
                 await DatabaseService(lobbyId: widget.lobbyId)
                     .incresePassCount();
@@ -41,11 +47,17 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
               child: Text('Nem ${widget.lobby['liedColor']}')),
           ElevatedButton(
               onPressed: () async {
-                widget.numberMatch
-                    ? DatabaseService(lobbyId: widget.lobbyId)
-                        .increseWinnerPoints(widget.lobby['activePlayer'])
-                    : DatabaseService(lobbyId: widget.lobbyId)
-                        .increseWinnerPoints(widget.lobby['opponentId']);
+                if (widget.numberMatch) {
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .increseWinnerPoints(widget.lobby['lastCardPlayer']);
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .drawForLoser(widget.lobby['opponentId']);
+                } else {
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .increseWinnerPoints(widget.lobby['opponentId']);
+                  DatabaseService(lobbyId: widget.lobbyId)
+                      .drawForLoser(widget.lobby['lastCardPlayer']);
+                }
                 Navigator.pop(context);
                 await DatabaseService(lobbyId: widget.lobbyId)
                     .incresePassCount();

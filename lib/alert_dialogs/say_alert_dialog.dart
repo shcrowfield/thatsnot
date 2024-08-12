@@ -86,6 +86,8 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       .incresePassCount();
                   await DatabaseService(lobbyId: widget.lobbyId)
                       .checkActivePlayer();
+                  await DatabaseService(lobbyId: widget.lobbyId)
+                      .updateLastCardPlayer(widget.user!.uid);
                 },
                 child: const Text('OK'),
               ),

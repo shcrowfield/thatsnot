@@ -82,7 +82,7 @@ class DatabaseService {
     }
   }
 
-  Future updateDrawPile() async {
+  Future<void> updateDrawPile() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? lobby = documentSnapshot.data();
@@ -90,7 +90,7 @@ class DatabaseService {
     Map<String, dynamic> updatedDrawPile = {};
     int pileCount = 0;
     int count = 0;
-    lobby?['playerLimit'] == 2 ? pileCount = /*45*/20 : pileCount = 65;
+    lobby?['playerLimit'] == 2 ? pileCount = /*45*/ 20 : pileCount = 65;
 
     deck.forEach((key, value) {
       if (count < pileCount) {
@@ -120,7 +120,7 @@ class DatabaseService {
     return sortedCards;
   }
 
-  Future drawCard() async {
+  Future<void> drawCard() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? lobby = documentSnapshot.data();
@@ -145,17 +145,17 @@ class DatabaseService {
     }
   }
 
-  Future drawPileIsEmpty() async {
+  Future<void> drawPileIsEmpty() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? lobby = documentSnapshot.data();
     Map<String, dynamic>? drawPile = lobby?['drawPile'];
-    if(drawPile!.isEmpty) {
+    if (drawPile!.isEmpty) {
       print('Vége a Játéknak');
     }
   }
 
-  Future updatePlayer(Player player, int currentPlayerCount) async {
+  Future<void> updatePlayer(Player player, int currentPlayerCount) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
 
@@ -169,7 +169,7 @@ class DatabaseService {
     }
   }
 
-  Future updateLies(String liedColor, int liedNumber,
+  Future<void> updateLies(String liedColor, int liedNumber,
       MapEntry<String, dynamic> choosedCard) async {
     final choosedCardMap = {
       choosedCard.key: choosedCard.value,
@@ -181,45 +181,54 @@ class DatabaseService {
     });
   }
 
-  Future updateOpponentId(String opponentId) async {
+  Future<void> updateOpponentId(String opponentId) async {
     return await lobbyCollection.doc(lobbyId).update({
       'opponentId': opponentId,
     });
   }
 
-  Future increseWinnerPoints(String id) async {
+  Future<void> updateLastCardPlayer(String lastCardPlayer) async {
+    return await lobbyCollection.doc(lobbyId).update({
+      'lastCardPlayer': lastCardPlayer,
+    });
+  }
+
+  Future<void> increseWinnerPoints(String id) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == id) {
         return await lobbyCollection.doc(lobbyId).update({
-          'player${i + 1}.points': FieldValue.increment(lobby['discardPile'].length),
+          'player${i + 1}.points':
+              FieldValue.increment(lobby['discardPile'].length),
           'discardPile': {},
         });
       }
     }
   }
 
-  Future drawForLoser(String id) async {
+  Future<void> drawForLoser(String id) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
-    Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
-    Map<String, Map<String, dynamic>> drawPile = lobby['drawPile'];
-    Map<String, Map<String, dynamic>> loserCards = {};
+    Map<String, dynamic> drawPile = await sortDrawPile();
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == id) {
-        loserCards = players[i]['cards'];
-        Map<String, Map<String, dynamic>> drawnCards = Map.fromEntries(drawPile.entries.take(2));
+        Map<String, dynamic> loserCards = players[i]['cards'];
+        Map<String, dynamic> drawnCards =
+            Map.fromEntries(drawPile.entries.take(2));
         loserCards.addAll(drawnCards);
         drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
-        }
+        return await lobbyCollection.doc(lobbyId).update({
+          'player${i + 1}.cards': loserCards,
+          'drawPile': drawPile,
+          'activePlayer': id,
+        });
       }
     }
+  }
 
-
-
-  Future moveToDiscardPile(
+  Future<void> moveToDiscardPile(
       MapEntry<String, dynamic> choosedCard, User user) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
@@ -233,19 +242,19 @@ class DatabaseService {
     }
   }
 
-  incresePassCount() async {
+  Future<void> incresePassCount() async {
     return await lobbyCollection.doc(lobbyId).update({
       'passCount': FieldValue.increment(1),
     });
   }
 
-  Future checkActivePlayer() async {
+  Future<void> checkActivePlayer() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
     int idx = 0;
     bool foundActive = false;
-    if (lobby['passCount'] == lobby['currentPlayerCount']) {
+    if (lobby['passCount'] >= lobby['currentPlayerCount']) {
       while (idx < lobby['currentPlayerCount'] && !foundActive) {
         if (players[idx]['isActive']) {
           foundActive = true;
@@ -300,7 +309,8 @@ class DatabaseService {
     int liedNumber,
     Map<String, dynamic> choosedCard,
     int passCount,
-      String oppoentId,
+    String oppoentId,
+    String lastCardPlayer,
   ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
@@ -321,6 +331,7 @@ class DatabaseService {
       'choosedCard': choosedCard,
       'passCount': passCount,
       'opponentId': oppoentId,
+      'lastCardPlayer': lastCardPlayer,
     });
   }
 }

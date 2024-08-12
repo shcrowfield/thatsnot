@@ -47,6 +47,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   Map<String, dynamic> choosedCard = {};
   int passCount = 0;
   String oppoentId = '';
+  String lastCardPlayer = '';
 
   @override
   void initState() {
@@ -230,6 +231,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                                 choosedCard,
                                 passCount,
                                 oppoentId,
+                                lastCardPlayer,
                               );
                         _onLobbyDetailsPageNext();
                       },
