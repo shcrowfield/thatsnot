@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:thatsnot/pages/leaderboard_page.dart';
 import 'package:thatsnot/pages/rules_screen.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/services/google_auth.dart';
@@ -54,11 +55,32 @@ class _StartPageState extends State<StartPage> {
         MaterialPageRoute(builder: (context) => LobbiesListPage(user: user)));
   }
 
+  _onResultsNext() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => LeaderboardPage(user: user)));
+  }
+
+  Map<String, dynamic> sizes(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final buttonWidth = screenWidth * 0.23;
+    final buttonHeight = screenHeight * 0.1;
+    final imageWidth = screenWidth * 0.4;
+    final imageHeight = screenHeight * 0.4;
+    final textSize = screenWidth * 0.02;
+    return {
+      'screenWidth': screenWidth,
+      'screenHeight': screenHeight,
+      'buttonWidth': buttonWidth,
+      'buttonHeight': buttonHeight,
+      'imageWidth': imageWidth,
+      'imageHeight': imageHeight,
+      'textSize': textSize,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
-    /* Size screenSize = MediaQuery.of(context).size;
-    double containerWidth = screenSize.width * 0.5;
-    double containerHeight = screenSize.height * 0.3;*/
     return Scaffold(
       backgroundColor: Colors.deepPurple,
       body: Container(
@@ -69,92 +91,128 @@ class _StartPageState extends State<StartPage> {
             colors: [Colors.deepPurple, Colors.deepOrange],
           ),
         ),
-        child: Center(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: _googleAuth.buildGoogleSignInOutButton(context,
-                        () async {
+        height: sizes(context)['screenHeight'],
+        width: sizes(context)['screenWidth'],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            Image.asset('assets/images/logo.png',
+                width: sizes(context)['imageWidth'],
+                height: sizes(context)['imageHeight']),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    _googleAuth.buildGoogleSignInOutButton(context, () async {
                       await _googleAuth.signIn();
                       setState(() {});
                     }, () async {
                       await _googleAuth.signOut();
                       setState(() {});
                     }),
-                  ),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Image.asset('assets/images/logo.png',
-                      width: 200, height: 140),
-                  ElevatedButton(
-                    onPressed: () {
-                      _onLobbyNext();
-                    },
-                    style: menuButtonStyle,
-                    child: Text(languageMap['CreateLobby'] ?? ''),
-                  ),
-                  const SizedBox(height: 5),
-                  ElevatedButton(
-                    onPressed: () {
-                      _onLobbyListNext();
-                    },
-                    style: menuButtonStyle,
-                    child: Text(languageMap['ActiveLobbies'] ?? ''),
-                  ),
-                  const SizedBox(height: 5),
-                  ElevatedButton(
-                    onPressed: () {},
-                    style: menuButtonStyle,
-                    child: Text(languageMap['Results'] ?? ''),
-                  ),
-                  const SizedBox(height: 5),
-                  user == null ? buildSignInButton() : buildSignOutButton(),
-                ],
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      _onRulesNext();
-                    },
-                    style: menuButtonStyle,
-                    child: Text(languageMap['Rules'] ?? ''),
-                  ),
-                  DropdownButton<String>(
-                    icon: const Icon(Icons.menu),
-                    style: const TextStyle(color: Colors.deepPurple),
-                    value: lang,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        lang = newValue!;
-                        if (lang == 'Hun') {
-                          setLanguage('Hun');
-                        } else {
-                          setLanguage(lang);
-                        }
-                      });
-                    },
-                    items: <String>['Hun', 'Eng', 'Tur']
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        _onLobbyNext();
+                      },
+                      style: menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ),
+                      child: Text(languageMap['CreateLobby'] ?? '', style: TextStyle(fontSize: sizes(context)['textSize'])),
+                    ),
+                    SizedBox(height: sizes(context)['screenHeight'] * 0.01),
+                    ElevatedButton(
+                      onPressed: () {
+                        _onLobbyListNext();
+                      },
+                      style: menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ),
+                      child: Text(languageMap['ActiveLobbies'] ?? ''),
+                    ),
+                    SizedBox(height: sizes(context)['screenHeight'] * 0.01),
+                    ElevatedButton(
+                      onPressed: () {
+                        _onResultsNext();
+                      },
+                      style: menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ),
+                      child: Text(languageMap['Results'] ?? ''),
+                    ),
+                    SizedBox(height: sizes(context)['screenHeight'] * 0.01),
+                    user == null ? buildSignInButton() : buildSignOutButton(),
+                  ],
+                ),
+                Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        _onRulesNext();
+                      },
+                      style: menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ),
+                      child: Text(languageMap['Rules'] ?? ''),
+                    ),
+                    SizedBox(height: sizes(context)['screenHeight'] * 0.01),
+                    langDropdown(),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget langDropdown() {
+    return Container(
+      height: sizes(context)['buttonHeight'],
+      width: sizes(context)['buttonWidth'],
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(50),
+
+      ),
+      child: DropdownButton<String>(
+        value: dropdownValue,
+        icon: const Icon(Icons.arrow_downward),
+        iconSize: 24,
+        elevation: 16,
+        style: const TextStyle(color: Colors.black),
+        underline: Container(
+          height: 2,
+          color: Colors.white,
+        ),
+        onChanged: (String? newValue) {
+          setState(() {
+            dropdownValue = newValue!;
+            setLanguage(newValue);
+          });
+        },
+        items: <String>['Hun', 'Eng', 'Tur']
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
       ),
     );
   }
@@ -172,7 +230,11 @@ class _StartPageState extends State<StartPage> {
           print(e);
         }
       },
-      style: menuButtonStyle,
+      style:  menuButtonStyle.copyWith(
+        minimumSize: WidgetStateProperty.all(Size(
+            sizes(context)['buttonWidth'],
+            sizes(context)['buttonHeight'])),
+      ),
       child: Text(languageMap['SignIn'] ?? ''),
     );
   }
@@ -181,7 +243,6 @@ class _StartPageState extends State<StartPage> {
     Map<String, String> languageMap = changeLanguageMap();
     return Column(
       children: [
-        //Text("User ID: ${user!.uid}"),
         ElevatedButton(
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
@@ -189,7 +250,11 @@ class _StartPageState extends State<StartPage> {
               user = FirebaseAuth.instance.currentUser;
             });
           },
-          style: menuButtonStyle,
+          style:  menuButtonStyle.copyWith(
+            minimumSize: WidgetStateProperty.all(Size(
+                sizes(context)['buttonWidth'],
+                sizes(context)['buttonHeight'])),
+          ),
           child: Text(languageMap['SignOut'] ?? ''),
         ),
       ],

@@ -6,13 +6,15 @@ class LieAlertDialog extends StatefulWidget {
   final Map<String, dynamic> lobby;
   final bool colorMatch;
   final bool numberMatch;
+  final VoidCallback onButtonPressed;
 
   const LieAlertDialog(
       {super.key,
       required this.lobbyId,
       required this.lobby,
       required this.colorMatch,
-      required this.numberMatch});
+      required this.numberMatch,
+      required this.onButtonPressed});
 
   @override
   State<LieAlertDialog> createState() => _LieAlertDialogState();
@@ -31,6 +33,8 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   DatabaseService(lobbyId: widget.lobbyId)
                       .increseWinnerPoints(widget.lobby['lastCardPlayer']);
                   DatabaseService(lobbyId: widget.lobbyId)
+                      .isHandEmpty(widget.lobby['lastCardPlayer']);
+                  DatabaseService(lobbyId: widget.lobbyId)
                       .drawForLoser(widget.lobby['opponentId']);
                 } else {
                   DatabaseService(lobbyId: widget.lobbyId)
@@ -38,6 +42,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   DatabaseService(lobbyId: widget.lobbyId)
                       .drawForLoser(widget.lobby['lastCardPlayer']);
                 }
+                widget.onButtonPressed();
                 Navigator.pop(context);
                 await DatabaseService(lobbyId: widget.lobbyId)
                     .incresePassCount();
@@ -51,6 +56,8 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   DatabaseService(lobbyId: widget.lobbyId)
                       .increseWinnerPoints(widget.lobby['lastCardPlayer']);
                   DatabaseService(lobbyId: widget.lobbyId)
+                      .isHandEmpty(widget.lobby['lastCardPlayer']);
+                  DatabaseService(lobbyId: widget.lobbyId)
                       .drawForLoser(widget.lobby['opponentId']);
                 } else {
                   DatabaseService(lobbyId: widget.lobbyId)
@@ -58,6 +65,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   DatabaseService(lobbyId: widget.lobbyId)
                       .drawForLoser(widget.lobby['lastCardPlayer']);
                 }
+                widget.onButtonPressed();
                 Navigator.pop(context);
                 await DatabaseService(lobbyId: widget.lobbyId)
                     .incresePassCount();

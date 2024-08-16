@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/models/card.dart';
 import 'package:thatsnot/models/player.dart';
+import 'package:thatsnot/services/leaderboard.dart';
 
 class DatabaseService {
   String lobbyId;
@@ -139,20 +140,30 @@ class DatabaseService {
           'player${i + 1}.cards': playerCards,
           'drawPile': sortedDrawPile,
         });
-        drawPileIsEmpty();
+        drawPileIsEmpty(player);
         break;
+      }else{
+        print('Nem a te köröd van');
       }
     }
   }
 
-  Future<void> drawPileIsEmpty() async {
+  Future<void> drawPileIsEmpty(Map<String, dynamic> player) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? lobby = documentSnapshot.data();
     Map<String, dynamic>? drawPile = lobby?['drawPile'];
     if (drawPile!.isEmpty) {
+      endGameHandNotEmpty();
+      if(player['points'] != 0){
+        updateLeaderBoard(player);
+      }
       print('Vége a Játéknak');
     }
+  }
+
+  Future updateLeaderBoard(player) async {
+      LeaderboardService(player).newOrExistingUser(player['uid'], player['name'], player['points']);
   }
 
   Future<void> updatePlayer(Player player, int currentPlayerCount) async {
@@ -208,12 +219,13 @@ class DatabaseService {
     }
   }
 
-  Future<void> drawForLoser(String id) async {
+  Future<void> drawForLoser(String uid) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
+    int currentPlayerCount = returnMap['documentSnapshot'].data()['currentPlayerCount'];
     Map<String, dynamic> drawPile = await sortDrawPile();
     for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == id) {
+      if (players[i]['uid'] == uid) {
         Map<String, dynamic> loserCards = players[i]['cards'];
         Map<String, dynamic> drawnCards =
             Map.fromEntries(drawPile.entries.take(2));
@@ -222,8 +234,56 @@ class DatabaseService {
         return await lobbyCollection.doc(lobbyId).update({
           'player${i + 1}.cards': loserCards,
           'drawPile': drawPile,
-          'activePlayer': id,
+          'activePlayer': uid,
+          'opponentId': '',
+          'passCount': currentPlayerCount,
         });
+      }
+    }
+  }
+
+  Future isHandEmpty(uid) async {
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    Map<String, dynamic> drawPile = await sortDrawPile();
+    for (int i = 0; i < players.length; i++) {
+      if (players[i]['uid'] == uid) {
+        if (players[i]['cards'].isEmpty) {
+          Map<String, dynamic> player = players[i];
+          Map<String, dynamic> playerCards = player['cards'];
+          int points = player['points'];
+          Map<String, dynamic> drawnCard = Map.fromEntries(drawPile.entries.take(6));
+          playerCards.addAll(drawnCard);
+          drawPile.removeWhere((key, value) => drawnCard.containsKey(key));
+          await lobbyCollection.doc(lobbyId).update({
+            'player${i + 1}.cards': playerCards,
+            'player${i + 1}.points': FieldValue.increment(points + 10),
+            'drawPile': drawPile,
+          });
+          drawPileIsEmpty(player);
+          break;
+        }
+      }
+    }
+  }
+
+  Future endGameHandNotEmpty() async{
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    for(int i = 0; i < players.length; i++){
+      Map<String, dynamic> playersCards = players[i]['cards'];
+      if(players[i]['cards'].isNotEmpty){
+        int cardsCount = players[i]['cards'].length;
+        int antiCardCount = 0;
+        for(int j = 0; j < cardsCount; j++){
+          if(playersCards[j]['color'] == 'Anti Joker'){
+            antiCardCount += 1;
+            await lobbyCollection.doc(lobbyId).update({
+              'player${i + 1}.points': FieldValue.increment(cardsCount + antiCardCount * 9),
+            });
+
+          }
+        }
       }
     }
   }

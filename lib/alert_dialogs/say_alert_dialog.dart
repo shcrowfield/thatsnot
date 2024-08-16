@@ -7,8 +7,9 @@ class SayAlertDialog extends StatefulWidget {
   final String lobbyId;
   final User? user;
   final MapEntry<String, dynamic> choosedCard;
+  final VoidCallback onButtonPressed;
 
-  const SayAlertDialog({super.key, required this.lobbyId, required this.user, required this.choosedCard});
+  const SayAlertDialog({super.key, required this.lobbyId, required this.user, required this.choosedCard, required this.onButtonPressed});
 
   @override
   State<SayAlertDialog> createState() => _SayAlertDialogState();
@@ -81,6 +82,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       widget.user!,
                     );
                   });
+                  widget.onButtonPressed();
                   Navigator.pop(context);
                   await DatabaseService(lobbyId: widget.lobbyId)
                       .incresePassCount();

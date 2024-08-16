@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 final ButtonStyle menuButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white,
   foregroundColor: Colors.black,
-  minimumSize: const Size(200, 40),
 );
 
 final ButtonStyle disabledMenuButtonStyle = ElevatedButton.styleFrom(

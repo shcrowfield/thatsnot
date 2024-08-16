@@ -82,6 +82,21 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                 nickName: widget.nickName)));
   }
 
+  Map<String, dynamic> sizes(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final buttonWidth = screenWidth * 0.23;
+    final buttonHeight = screenHeight * 0.1;
+    final textSize = screenWidth * 0.02;
+    return {
+      'screenWidth': screenWidth,
+      'screenHeight': screenHeight,
+      'buttonWidth': buttonWidth,
+      'buttonHeight': buttonHeight,
+      'textSize': textSize,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,6 +104,8 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
       backgroundColor: Colors.deepPurple,
       body: SingleChildScrollView(
         child: Container(
+          height: sizes(context)['screenHeight'],
+          width: sizes(context)['screenWidth'],
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topLeft,
@@ -96,156 +113,160 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
               colors: [Colors.purple, Colors.deepPurple],
             ),
           ),
-          child: Center(
-            child: SizedBox(
-              width: 400,
-              child: Column(
-                children: [
-                  const SizedBox(height: 25),
-                  TextButton.icon(
-                    onPressed: () {
-                      _onStartNext();
-                    },
-                    icon: const Icon(Icons.arrow_back),
-                    label: Text(languageMap['Back'] ?? ''),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(languageMap['Nickname'] ?? '',
-                      style:
-                          const TextStyle(fontSize: 20, color: Colors.white)),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      hintText: languageMap['Nickname'],
-                      fillColor: Colors.white,
-                      filled: true,
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white, width: 2.0),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.orange, width: 2.0),
-                      ),
-                    ),
-                    controller: nickNameController,
-                    onChanged: (String value) {
-                      setState(() {
-                        nickName = nickNameController.text;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  Text(languageMap['LobbyName'] ?? '',
-                      style:
-                          const TextStyle(fontSize: 20, color: Colors.white)),
-                  TextFormField(
-                    decoration: InputDecoration(
-                      hintText: languageMap['LobbyName'] ?? '',
-                      fillColor: Colors.white,
-                      filled: true,
-                      enabledBorder: const OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white, width: 2.0),
-                      ),
-                      focusedBorder: const OutlineInputBorder(
-                        borderSide:
-                            BorderSide(color: Colors.orange, width: 2.0),
-                      ),
-                    ),
-                    controller: lobbyController,
-                    onChanged: (String value) {
-                      setState(() {
-                        lobbyName = lobbyController.text;
-                        lobbyId = _randomId(lobbyName);
-                      });
-                    },
-                  ),
-                  Text(languageMap['NumberOfPlayers'] ?? '',
-                      style:
-                          const TextStyle(fontSize: 20, color: Colors.white)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              TextButton.icon(
+                onPressed: () {
+                  _onStartNext();
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: Text(languageMap['Back'] ?? '', style: TextStyle(fontSize: sizes(context)['textSize'])),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                ),
+              ),
+              Center(
+                child: SizedBox(
+                  width: sizes(context)['screenWidth'] * 0.6,
+                  height: sizes(context)['screenHeight'] * 0.9,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton(
-                        style: playerLimit == 2
-                            ? choosedButtonStyle
-                            : unchoosedButtonStyle,
-                        onPressed: () {
+                      const SizedBox(height: 10),
+                      Text(languageMap['Nickname'] ?? '',
+                          style:
+                              TextStyle(fontSize: sizes(context)['textSize'], color: Colors.white)),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          hintText: languageMap['Nickname'],
+                          hintStyle: TextStyle( fontSize: sizes(context)['textSize']),
+                          fillColor: Colors.white,
+                          filled: true,
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white, width: 2.0),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.orange, width: 2.0),
+                          ),
+                        ),
+                        controller: nickNameController,
+                        onChanged: (String value) {
                           setState(() {
-                            playerLimit = 2;
+                            nickName = nickNameController.text;
                           });
                         },
-                        child: const Text('2'),
                       ),
-                      ElevatedButton(
-                        style: playerLimit == 3
-                            ? choosedButtonStyle
-                            : unchoosedButtonStyle,
-                        onPressed: () {
+                      const SizedBox(height: 10),
+                      Text(languageMap['LobbyName'] ?? '',
+                          style:
+                              const TextStyle(fontSize: 20, color: Colors.white)),
+                      TextFormField(
+                        decoration: InputDecoration(
+                          hintText: languageMap['LobbyName'] ?? '',
+                          fillColor: Colors.white,
+                          filled: true,
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.white, width: 2.0),
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide:
+                                BorderSide(color: Colors.orange, width: 2.0),
+                          ),
+                        ),
+                        controller: lobbyController,
+                        onChanged: (String value) {
                           setState(() {
-                            playerLimit = 3;
+                            lobbyName = lobbyController.text;
+                            lobbyId = _randomId(lobbyName);
                           });
                         },
-                        child: const Text('3'),
                       ),
-                      ElevatedButton(
-                        style: playerLimit == 4
-                            ? choosedButtonStyle
-                            : unchoosedButtonStyle,
-                        onPressed: () {
-                          setState(() {
-                            playerLimit = 4;
-                          });
-                        },
-                        child: const Text('4'),
+                      Text(languageMap['NumberOfPlayers'] ?? '',
+                          style:
+                              const TextStyle(fontSize: 20, color: Colors.white)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          ElevatedButton(
+                            style: playerLimit == 2
+                                ? choosedButtonStyle
+                                : unchoosedButtonStyle,
+                            onPressed: () {
+                              setState(() {
+                                playerLimit = 2;
+                              });
+                            },
+                            child: const Text('2'),
+                          ),
+                          ElevatedButton(
+                            style: playerLimit == 3
+                                ? choosedButtonStyle
+                                : unchoosedButtonStyle,
+                            onPressed: () {
+                              setState(() {
+                                playerLimit = 3;
+                              });
+                            },
+                            child: const Text('3'),
+                          ),
+                          ElevatedButton(
+                            style: playerLimit == 4
+                                ? choosedButtonStyle
+                                : unchoosedButtonStyle,
+                            onPressed: () {
+                              setState(() {
+                                playerLimit = 4;
+                              });
+                            },
+                            child: const Text('4'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        lobbyName.isEmpty && nickName.isEmpty
-                            ? null
-                            : await DatabaseService(lobbyId: lobbyId)
-                                .updateLobbyData(
-                                lobbyName,
-                                playerLimit,
-                                currentPlayerCount,
-                                player1 = Player(
-                                    uid: widget.user!.uid,
-                                    name: nickName,
-                                    points: 0,
-                                    isActive: true),
-                                player2,
-                                player3,
-                                player4,
-                                isReady,
-                                drawPile,
-                                discardPile,
-                                deck,
-                                activePlayer = widget.user!.uid,
-                                liedColor,
-                                liedNumber,
-                                choosedCard,
-                                passCount,
-                                oppoentId,
-                                lastCardPlayer,
-                              );
-                        _onLobbyDetailsPageNext();
-                      },
-                      style: lobbyName == ''
-                          ? menuButtonStyle.copyWith(
-                              backgroundColor:
-                                  WidgetStateProperty.all(Colors.white38))
-                          : menuButtonStyle,
-                      child: Text(languageMap['Next'] ?? ''),
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              ElevatedButton(
+                onPressed: () async {
+                  lobbyName.isEmpty && nickName.isEmpty
+                      ? null
+                      : await DatabaseService(lobbyId: lobbyId)
+                      .updateLobbyData(
+                    lobbyName,
+                    playerLimit,
+                    currentPlayerCount,
+                    player1 = Player(
+                        uid: widget.user!.uid,
+                        name: nickName,
+                        points: 0,
+                        isActive: true),
+                    player2,
+                    player3,
+                    player4,
+                    isReady,
+                    drawPile,
+                    discardPile,
+                    deck,
+                    activePlayer = widget.user!.uid,
+                    liedColor,
+                    liedNumber,
+                    choosedCard,
+                    passCount,
+                    oppoentId,
+                    lastCardPlayer,
+                  );
+                  _onLobbyDetailsPageNext();
+                },
+                style: lobbyName == ''
+                    ? menuButtonStyle.copyWith(
+                    backgroundColor:
+                    WidgetStateProperty.all(Colors.white38))
+                    : menuButtonStyle,
+                child: Text(languageMap['Next'] ?? ''),
+              ),
+            ],
           ),
         ),
       ),

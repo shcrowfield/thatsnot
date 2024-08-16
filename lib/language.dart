@@ -65,7 +65,7 @@ String lang = 'Hun';
 
 void setLanguage(String langValue) {
   lang = langValue;
-  changeLanguageMap();
+  languageMap = changeLanguageMap();
 }
 
 Map<String, String> changeLanguageMap() {

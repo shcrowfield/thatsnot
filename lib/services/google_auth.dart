@@ -10,6 +10,19 @@ class GoogleAuth {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   User? user;
 
+  Map<String, dynamic> buttonSizes(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final buttonWidth = screenWidth * 0.23;
+    final buttonHeight = screenHeight * 0.1;
+    return {
+      'screenWidth': screenWidth,
+      'screenHeight': screenHeight,
+      'buttonWidth': buttonWidth,
+      'buttonHeight': buttonHeight,
+    };
+  }
+
   Future<void> signIn() async {
     try {
       final GoogleSignInAccount? googleSignInAccount =
@@ -43,7 +56,10 @@ class GoogleAuth {
     if (user == null) {
       return ElevatedButton.icon(
         onPressed: signInCallback,
-        style: googleButtonStyle,
+        style: googleButtonStyle.copyWith(
+          minimumSize: WidgetStateProperty.all<Size>(
+              Size(buttonSizes(context)['buttonWidth'], buttonSizes(context)['buttonHeight'])),
+        ),
         icon: const Icon(FontAwesomeIcons.google),
         label: Text(languageMap['GoogleSignIn'] ?? ''),
       );

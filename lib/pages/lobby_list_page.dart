@@ -27,11 +27,11 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
   }
 
   String _allowToJoin(int currentPlayerCount, int playerLimit,
-      String NickName) {
-    if (currentPlayerCount < playerLimit && NickName.isNotEmpty) {
+      String nickName) {
+    if (currentPlayerCount < playerLimit && nickName.isNotEmpty) {
       return languageMap['Allow to Enter'] ?? "";
     }
-    else if(currentPlayerCount < playerLimit && NickName.isEmpty) {
+    else if(currentPlayerCount < playerLimit && nickName.isEmpty) {
       return languageMap['EnterNickname'] ?? "";
     }else {
     return languageMap['LobbyIsFull'] ?? "";

@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:thatsnot/language.dart';
@@ -24,6 +23,21 @@ class LobbyDetailsPage extends StatefulWidget {
 class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
   int? currentPlayerCount;
   bool isPressed = false;
+
+  Map<String, dynamic> sizes(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final buttonWidth = screenWidth * 0.23;
+    final buttonHeight = screenHeight * 0.1;
+    final textSize = screenWidth * 0.02;
+    return {
+      'screenWidth': screenWidth,
+      'screenHeight': screenHeight,
+      'buttonWidth': buttonWidth,
+      'buttonHeight': buttonHeight,
+      'textSize': textSize,
+    };
+  }
 
   _isReadyCounter() async {
     var documentSnapshot = await FirebaseFirestore.instance
@@ -63,6 +77,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
             ),
           ),
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               TextButton.icon(
                 onPressed: () {
@@ -71,16 +86,17 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                   _onLobbyListNext();
                 },
                 icon: const Icon(Icons.arrow_back),
-                label: Text(languageMap['Back'] ?? ''),
+                label: Text(languageMap['Back'] ?? '',
+                    style: TextStyle(fontSize: sizes(context)['textSize'])),
                 style: TextButton.styleFrom(
                   foregroundColor: Colors.white,
                 ),
               ),
-              FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance
+              StreamBuilder<DocumentSnapshot>(
+                stream: FirebaseFirestore.instance
                     .collection('lobbies')
                     .doc(widget.lobbyId)
-                    .get(),
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
@@ -90,33 +106,59 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                     return Column(
                       children: [
                         ListTile(
-                          title: Text(languageMap['LobbyName'] ?? ''),
-                          subtitle: Text(lobby['lobbyName']),
+                          title: Text(languageMap['LobbyName'] ?? '',
+                              style: TextStyle(
+                                  fontSize: sizes(context)['textSize'],
+                                  color: Colors.white)),
+                          subtitle: Text(lobby['lobbyName'],
+                              style: TextStyle(
+                                  fontSize: sizes(context)['textSize'],
+                                  color: Colors.white)),
                         ),
                         ListTile(
-                          title: Text(languageMap['Players'] ?? ''),
+                          title: Text(languageMap['Players'] ?? '',
+                              style: TextStyle(
+                                  fontSize: sizes(context)['textSize'],
+                                  color: Colors.white)),
                           subtitle: Text(
-                              "${lobby['currentPlayerCount']} / ${lobby['playerLimit']}"),
+                              "${lobby['currentPlayerCount']} / ${lobby['playerLimit']}",
+                              style: TextStyle(
+                                  fontSize: sizes(context)['textSize'],
+                                  color: Colors.white)),
                         ),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
-                            children: List.generate(currentPlayerCount!, (index) {
+                            children:
+                                List.generate(currentPlayerCount!, (index) {
                               int playerIndex = index + 1;
                               return lobby['player$playerIndex'] != null
                                   ? Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.person, color: Colors.white),
-                                    SizedBox(width: 5),
-                                    Text(
-                                      lobby['player$playerIndex']['name'],
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              )
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size:
+                                                sizes(context)['screenWidth'] *
+                                                    0.05,
+                                          ),
+                                          SizedBox(
+                                              width: sizes(
+                                                      context)['screenWidth'] *
+                                                  0.01),
+                                          Text(
+                                            lobby['player$playerIndex']['name'],
+                                            style: TextStyle(
+                                                fontSize:
+                                                    sizes(context)['textSize'] *
+                                                        2,
+                                                color: Colors.white),
+                                          ),
+                                        ],
+                                      ),
+                                    )
                                   : Container();
                             }),
                           ),
@@ -126,17 +168,30 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                             if (!isPressed) {
                               setState(() {
                                 isPressed = true;
-                                lobby.reference.update({
-                                  'isReady': FieldValue.increment(1),
                                 });
+                              lobby.reference.update({
+                                'isReady': FieldValue.increment(1),
                               });
-                              _isReadyCounter();
-                              DatabaseService(lobbyId: lobby['lobbyId']).updateDeck();
-                              DatabaseService(lobbyId: lobby['lobbyId']).dealCards();
-                              DatabaseService(lobbyId: lobby['lobbyId']).updateDrawPile();
                             }
+                            _isReadyCounter();
+                            DatabaseService(lobbyId: lobby['lobbyId'])
+                                .updateDeck();
+                            DatabaseService(lobbyId: lobby['lobbyId'])
+                                .dealCards();
+                            DatabaseService(lobbyId: lobby['lobbyId'])
+                                .updateDrawPile();
                           },
-                          style: isPressed ? choosedButtonStyle : menuButtonStyle,
+                          style: isPressed
+                              ? choosedButtonStyle.copyWith(
+                                  minimumSize: WidgetStateProperty.all(Size(
+                                      sizes(context)['buttonWidth'],
+                                      sizes(context)['buttonHeight'])),
+                                )
+                              : menuButtonStyle.copyWith(
+                                  minimumSize: WidgetStateProperty.all(Size(
+                                      sizes(context)['buttonWidth'],
+                                      sizes(context)['buttonHeight'])),
+                                ),
                           child: Text(languageMap['Ready'] ?? ''),
                         ),
                       ],
