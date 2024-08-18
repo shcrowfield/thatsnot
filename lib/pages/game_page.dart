@@ -29,12 +29,16 @@ class _GamePageState extends State<GamePage> {
     final buttonWidth = screenWidth * 0.23;
     final buttonHeight = screenHeight * 0.1;
     final textSize = screenWidth * 0.02;
+    final cardWidth = screenWidth * 0.13;
+    final cardHeight = screenHeight * 0.3;
     return {
       'screenWidth': screenWidth,
       'screenHeight': screenHeight,
       'buttonWidth': buttonWidth,
       'buttonHeight': buttonHeight,
       'textSize': textSize,
+      'cardWidth': cardWidth,
+      'cardHeight': cardHeight,
     };
   }
 
@@ -64,7 +68,7 @@ class _GamePageState extends State<GamePage> {
 
   Stream<Map<String, dynamic>?> getCards(String uid) async* {
     Map<String, dynamic> returnMap =
-    await LobbyManager.getPlayersList(widget.lobbyId);
+        await LobbyManager.getPlayersList(widget.lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == uid) {
@@ -100,11 +104,23 @@ class _GamePageState extends State<GamePage> {
   Future getActivePlayerName(String activePlayerId) async {
     var lobby = await _getLobbyData();
     String activePlayerId = lobby['activePlayer'];
-   Map<String, dynamic> returnMap = await LobbyManager.getPlayersList(widget.lobbyId);
+    Map<String, dynamic> returnMap =
+        await LobbyManager.getPlayersList(widget.lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == activePlayerId) {
         return players[i]['name'];
+      }
+    }
+  }
+
+  Future getPlayerPoints(String uid) async {
+    Map<String, dynamic> returnMap =
+        await LobbyManager.getPlayersList(widget.lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    for (int i = 0; i < players.length; i++) {
+      if (players[i]['uid'] == uid) {
+        return players[i]['points'];
       }
     }
   }
@@ -132,148 +148,182 @@ class _GamePageState extends State<GamePage> {
           ),
           Expanded(
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection('lobbies')
+                    .doc(widget.lobbyId)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    String activePlayerId = snapshot.data?['activePlayer'];
+                    return FutureBuilder(
+                      future: getActivePlayerName(activePlayerId),
+                      builder: (context, activePlayerSnapshot) {
+                        if (activePlayerSnapshot.hasData) {
+                          return Column(
+                            children: [
+                              Text('Aktív játékos: ${activePlayerSnapshot.data}'),
+                              FutureBuilder(future: getPlayerPoints(widget.user!.uid), builder: (context, pointSnapshot) {
+                                if (pointSnapshot.hasData) {
+                                  return Text('Pontok Lacikám: ${pointSnapshot.data}');
+                                } else {
+                                  return Text('Loading...');
+                                }
+                              }),
+                            ],
+                          );
+                        } else {
+                          return Text('Loading...');
+                        }
+                      },
+                    );
+                  } else {
+                    return Text('Loading...');
+                  }
+                },
+              ),
+              Column(
                 children: [
-                  StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection('lobbies').doc(widget.lobbyId).snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        String activePlayerId = snapshot.data?['activePlayer'];
-                        return FutureBuilder(
-                          future: getActivePlayerName(activePlayerId),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
-                              return Text('Active player: ${snapshot.data}');
-                            } else {
-                              return Text('Loading...');
-                            }
-                          },
-                        );
-                      } else {
-                        return Text('Loading...');
-                      }
-                    },
-                  ),
-                  Column(
-                    children: [
-                      CountDown(controller: _controller),
-                      ElevatedButton(
-                          onPressed: () => _controller.start(),
-                          child: const Text('start')),
-                      ElevatedButton(
-                          onPressed: () async {
-                            await DatabaseService(lobbyId: widget.lobbyId).drawCard();
-                            reBuild();
-                          },
-                          child: const Text('DRAW')),
-                    ],
-                  ),
-                  StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection('lobbies').doc(widget.lobbyId).snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        String liedColor = snapshot.data?['liedColor'];
-                        String? liedNumber = snapshot.data?['liedNumber'].toString();
-                        return Text('Bemondott: $liedColor $liedNumber');
-                      } else {
-                        return Text('Loading...');
-                      }
-                    },
-                  ),
+                  CountDown(controller: _controller),
+                  ElevatedButton(
+                      onPressed: () => _controller.start(),
+                      child: const Text('start')),
+                  ElevatedButton(
+                      onPressed: () async {
+                        await DatabaseService(lobbyId: widget.lobbyId)
+                            .drawCard();
+                        reBuild();
+                      },
+                      child: const Text('DRAW')),
                 ],
-              )),
+              ),
+              StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection('lobbies')
+                    .doc(widget.lobbyId)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    String liedColor = snapshot.data?['liedColor'];
+                    String? liedNumber =
+                        snapshot.data?['liedNumber'].toString();
+                    return Text('Bemondott: $liedColor $liedNumber');
+                  } else {
+                    return Text('Loading...');
+                  }
+                },
+              ),
+            ],
+          )),
           Expanded(
             //alignment: Alignment.bottomCenter,
             child: Container(
               color: Colors.deepOrangeAccent,
               child: Center(
                   child: SizedBox(
-                    height: sizes(context)['screenHeight'] * 0.4,
-                    child: Row(
+                height: sizes(context)['screenHeight'] * 0.5,
+                child: Row(
+                  children: [
+                    Column(
                       children: [
-                        Column(
-                          children: [
-                            ElevatedButton(
-                                onPressed: reBuild, child: const Text('Ossz')),
-                            ElevatedButton(
-                                onPressed: () async {
-                                  await playerIsActive(widget.user!.uid)
-                                      ? print('Te vagy az aktív játékos')
-                                      : buttonIsAcive();
-                                },
-                                child: const Text('LIE')),
-                          ],
-                        ),
-                        Expanded(
-                          child: StreamBuilder<Map<String, dynamic>?>(
-                            stream: getCards(widget.user!.uid),
-                            builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}');
-                              } else if (snapshot.hasData) {
-                                Map<String, dynamic> userCards = snapshot.data!;
-                                List<MapEntry<String, dynamic>> cardList =
+                        ElevatedButton(
+                            onPressed: reBuild, child: const Icon(Icons.refresh)),
+                        ElevatedButton(
+                            onPressed: () async {
+                              await playerIsActive(widget.user!.uid)
+                                  ? print('Te vagy az aktív játékos')
+                                  : buttonIsAcive();
+                            },
+                            child: const Text('LIE')),
+                      ],
+                    ),
+                    Expanded(
+                      child: StreamBuilder<Map<String, dynamic>?>(
+                        stream: getCards(widget.user!.uid),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (snapshot.hasData) {
+                            Map<String, dynamic> userCards = snapshot.data!;
+                            List<MapEntry<String, dynamic>> cardList =
                                 userCards.entries.toList();
-                                return SizedBox(
-                                  width: double.infinity,
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: cardList.length,
-                                    itemBuilder: (context, index) {
-                                      return SizedBox(
-                                        width: sizes(context)['screenWidth'] * 0.13,
-                                        child: InkWell(
-                                          onTap: () {
-                                            choosedCard = cardList[index];
-                                            showDialog(
-                                                context: context,
-                                                builder: (context) => SayAlertDialog(
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: cardList.length,
+                                itemBuilder: (context, index) {
+                                  return SizedBox(
+                                    width: sizes(context)['cardWidth'],
+                                    height: sizes(context)['cardHeight'],
+                                    child: InkWell(
+                                      onTap: () {
+                                        choosedCard = cardList[index];
+                                        showDialog(
+                                            context: context,
+                                            builder: (context) =>
+                                                SayAlertDialog(
                                                   lobbyId: widget.lobbyId,
                                                   user: widget.user,
                                                   choosedCard: choosedCard,
                                                   onButtonPressed: reBuild,
                                                 ));
-                                            reBuild();
-                                          },
-                                          child: Card(
-                                            child: Column(
-                                              children: [
-                                                Text(cardList[index].value['color']),
-                                                Text(cardList[index]
-                                                    .value['number']
-                                                    .toString()),
-                                              ],
-                                            ),
+                                        reBuild();
+                                      },
+                                      child: Card(
+                                        color: Colors.white,
+                                          child: Center(
+                                            child:
+                                              /*Image.asset(
+                                                'assets/cards/${cardList[index].value['image'].replaceAll('assets/', '')}',
+                                                width:
+                                                    sizes(context)['cardWidth'] * 1.2,
+                                                height: sizes(
+                                                    context)['cardHeight'] * 1.2,
+                                              ),*/
+                                              Column(
+                                                children: [
+                                                  Text(cardList[index].value['color']),
+                                                  Text(cardList[index]
+                                                      .value['number']
+                                                      .toString()),
+                                                ],
+                                              ),
+
                                           ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              }
-                              return const Text('Üres a kezed');
-                            },
-                          ),
-                        ),
-                        Column(
-                          children: [
-                            ElevatedButton(
-                                onPressed: () async {
-                                  await DatabaseService(lobbyId: widget.lobbyId)
-                                      .incresePassCount();
-                                  await DatabaseService(lobbyId: widget.lobbyId)
-                                      .checkActivePlayer();
-                                  reBuild();
+
+                                      ),
+                                    ),
+                                  );
                                 },
-                                child: const Text('PASSZ')),
-                          ],
-                        ),
+                              ),
+                            );
+                          }
+                          return const Text('Üres a kezed');
+                        },
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        ElevatedButton(
+                            onPressed: () async {
+                              await DatabaseService(lobbyId: widget.lobbyId)
+                                  .incresePassCount();
+                              await DatabaseService(lobbyId: widget.lobbyId)
+                                  .checkActivePlayer();
+                              reBuild();
+                            },
+                            child: const Text('PASSZ')),
                       ],
                     ),
-                  )),
+                  ],
+                ),
+              )),
             ),
           ),
         ],
