@@ -42,10 +42,30 @@ class LobbyManager {
     if (currentPlayerCount != null && currentPlayerCount! > 0) {
       await documentSnapshot.reference.update({
         'currentPlayerCount': FieldValue.increment(-1),
-        'isReady': FieldValue.increment(-1)
+        //'isReady': FieldValue.increment(-1)
       });
     }
     LobbyManager.deletePlayer(lobbyId);
+  }
+
+  static void decreseIsReady(lobbyId) async {
+    var documentSnapshot = await FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(lobbyId)
+        .get();
+    await documentSnapshot.reference.update({
+      'isReady': FieldValue.increment(-1),
+    });
+  }
+
+  static void decresePlayerLimit(lobbyId) async {
+    var documentSnapshot = await FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(lobbyId)
+        .get();
+    await documentSnapshot.reference.update({
+      'playerLimit': FieldValue.increment(-1),
+    });
   }
 
   static deletePlayer(lobbyId) async {

@@ -69,7 +69,36 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
       - assets/images/logo.png
-      - assets/cards/orange1.png
+      - assets/cards/orange1.PNG
+      - assets/cards/orange2.png
+      - assets/cards/orange3.PNG
+      - assets/cards/orange4.PNG
+      - assets/cards/orange5.PNG
+      - assets/cards/orange6.PNG
+      - assets/cards/orange7.PNG
+      - assets/cards/orange8.PNG
+      - assets/cards/orange9.PNG
+      - assets/cards/purple1.PNG
+      - assets/cards/purple2.PNG
+      - assets/cards/purple3.PNG
+      - assets/cards/purple4.PNG
+      - assets/cards/purple5.PNG
+      - assets/cards/purple6.PNG
+      - assets/cards/purple7.PNG
+      - assets/cards/purple8.PNG
+      - assets/cards/purple9.PNG
+      - assets/cards/black1.PNG
+      - assets/cards/black2.PNG
+      - assets/cards/black3.PNG
+      - assets/cards/black4.PNG
+      - assets/cards/black5.PNG
+      - assets/cards/black6.PNG
+      - assets/cards/black7.PNG
+      - assets/cards/black8.PNG
+      - assets/cards/black9.PNG
+      - assets/cards/ajoker.png
+      - assets/cards/njoker.png
+      - assets/cards/cjoker.png
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

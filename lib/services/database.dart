@@ -214,6 +214,7 @@ class DatabaseService {
           'player${i + 1}.points':
               FieldValue.increment(lobby['discardPile'].length),
           'discardPile': {},
+          'choosedCard': {},
         });
       }
     }
@@ -222,7 +223,6 @@ class DatabaseService {
   Future<void> drawForLoser(String uid) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
-    int currentPlayerCount = returnMap['documentSnapshot'].data()['currentPlayerCount'];
     Map<String, dynamic> drawPile = await sortDrawPile();
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == uid) {
@@ -236,7 +236,6 @@ class DatabaseService {
           'drawPile': drawPile,
           'activePlayer': uid,
           'opponentId': '',
-          'passCount': currentPlayerCount,
         });
       }
     }

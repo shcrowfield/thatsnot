@@ -81,9 +81,16 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
             children: [
               TextButton.icon(
                 onPressed: () {
-                  LobbyManager.checkPlayerMap(
-                      widget.lobbyId, widget.user, currentPlayerCount);
-                  _onLobbyListNext();
+                  if (isPressed) {
+                    LobbyManager.checkPlayerMap(
+                        widget.lobbyId, widget.user, currentPlayerCount);
+                    LobbyManager.decreseIsReady(widget.lobbyId);
+                    _onLobbyListNext();
+                  } else {
+                    LobbyManager.checkPlayerMap(
+                        widget.lobbyId, widget.user, currentPlayerCount);
+                    _onLobbyListNext();
+                  }
                 },
                 icon: const Icon(Icons.arrow_back),
                 label: Text(languageMap['Back'] ?? '',
@@ -168,18 +175,18 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                             if (!isPressed) {
                               setState(() {
                                 isPressed = true;
-                                });
+                              });
                               lobby.reference.update({
                                 'isReady': FieldValue.increment(1),
                               });
                             }
                             _isReadyCounter();
-                            DatabaseService(lobbyId: lobby['lobbyId'])
+                           /* DatabaseService(lobbyId: lobby['lobbyId'])
                                 .updateDeck();
                             DatabaseService(lobbyId: lobby['lobbyId'])
                                 .dealCards();
                             DatabaseService(lobbyId: lobby['lobbyId'])
-                                .updateDrawPile();
+                                .updateDrawPile();*/
                           },
                           style: isPressed
                               ? choosedButtonStyle.copyWith(

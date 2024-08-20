@@ -44,6 +44,21 @@ class _GamePageState extends State<GamePage> {
 
   MapEntry<String, dynamic> choosedCard = const MapEntry('', '');
 
+  @override
+  initState() {
+    super.initState();
+    DatabaseService(lobbyId: widget.lobbyId)
+        .updateDeck();
+    DatabaseService(lobbyId: widget.lobbyId)
+        .dealCards();
+    DatabaseService(lobbyId: widget.lobbyId)
+        .updateDrawPile();
+  }
+
+  dispose() {
+    super.dispose();
+  }
+
   _getLobbyData() async {
     var snapshot = await FirebaseFirestore.instance
         .collection('lobbies')
@@ -77,10 +92,16 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  Future<bool> playerIsActive(String uid) async {
+  Future<bool> LieButtonIsActive(String uid) async {
     var lobby = await _getLobbyData();
     String activePlayer = lobby['activePlayer'];
-    return activePlayer == uid;
+    bool isThereFirstCard = lobby['choosedCard'].isNotEmpty;
+    bool isPlayerTurn = activePlayer == uid;
+    if (isThereFirstCard && isPlayerTurn) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   void buttonIsAcive() async {
@@ -137,7 +158,12 @@ class _GamePageState extends State<GamePage> {
         children: [
           const SizedBox(height: 15),
           TextButton.icon(
-            onPressed: () {
+            onPressed: () async {
+              var lobbyData = await _getLobbyData();
+              LobbyManager.checkPlayerMap(
+                  widget.lobbyId, widget.user, lobbyData['currentPlayerCount']);
+              LobbyManager.decreseIsReady(widget.lobbyId);
+              LobbyManager.decresePlayerLimit(widget.lobbyId);
               onStartNext();
             },
             icon: const Icon(Icons.settings),
@@ -164,14 +190,18 @@ class _GamePageState extends State<GamePage> {
                         if (activePlayerSnapshot.hasData) {
                           return Column(
                             children: [
-                              Text('Aktív játékos: ${activePlayerSnapshot.data}'),
-                              FutureBuilder(future: getPlayerPoints(widget.user!.uid), builder: (context, pointSnapshot) {
-                                if (pointSnapshot.hasData) {
-                                  return Text('Pontok Lacikám: ${pointSnapshot.data}');
-                                } else {
-                                  return Text('Loading...');
-                                }
-                              }),
+                              Text(
+                                  'Aktív játékos: ${activePlayerSnapshot.data}'),
+                              FutureBuilder(
+                                  future: getPlayerPoints(widget.user!.uid),
+                                  builder: (context, pointSnapshot) {
+                                    if (pointSnapshot.hasData) {
+                                      return Text(
+                                          'Pontok Lacikám: ${pointSnapshot.data}');
+                                    } else {
+                                      return Text('Loading...');
+                                    }
+                                  }),
                             ],
                           );
                         } else {
@@ -229,12 +259,14 @@ class _GamePageState extends State<GamePage> {
                     Column(
                       children: [
                         ElevatedButton(
-                            onPressed: reBuild, child: const Icon(Icons.refresh)),
+                            onPressed: reBuild,
+                            child: const Icon(Icons.refresh)),
                         ElevatedButton(
                             onPressed: () async {
-                              await playerIsActive(widget.user!.uid)
-                                  ? print('Te vagy az aktív játékos')
-                                  : buttonIsAcive();
+                              await LieButtonIsActive(widget.user!.uid)
+                                  ? buttonIsAcive()
+                                  : print(
+                                      'Te vagy az aktív játékos vagy nincs kártya kiválasztva');
                             },
                             child: const Text('LIE')),
                       ],
@@ -276,27 +308,25 @@ class _GamePageState extends State<GamePage> {
                                         reBuild();
                                       },
                                       child: Card(
-                                        color: Colors.white,
-                                          child: Center(
-                                            child:
-                                              /*Image.asset(
-                                                'assets/cards/${cardList[index].value['image'].replaceAll('assets/', '')}',
-                                                width:
-                                                    sizes(context)['cardWidth'] * 1.2,
-                                                height: sizes(
-                                                    context)['cardHeight'] * 1.2,
-                                              ),*/
-                                              Column(
+                                        color: Colors.black,
+                                        child: Center(
+                                          child: Image.asset(
+                                            '${cardList[index].value['image']}',
+                                            width: sizes(context)['cardWidth'] *
+                                                1.2,
+                                            height:
+                                                sizes(context)['cardHeight'] *
+                                                    1.2,
+                                          ),
+                                          /*Column(
                                                 children: [
                                                   Text(cardList[index].value['color']),
                                                   Text(cardList[index]
                                                       .value['number']
                                                       .toString()),
                                                 ],
-                                              ),
-
-                                          ),
-
+                                              ),*/
+                                        ),
                                       ),
                                     ),
                                   );
