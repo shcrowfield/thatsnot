@@ -6,7 +6,6 @@ import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/pages/game_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
-import 'package:thatsnot/services/database.dart';
 
 class LobbyDetailsPage extends StatefulWidget {
   final String lobbyId;
