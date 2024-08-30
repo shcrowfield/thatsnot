@@ -21,7 +21,7 @@ class Player {
   };
  }
 
- factory Player.fromMap(Map<String, dynamic> data) {
+/* factory Player.fromMap(Map<String, dynamic> data) {
   return Player(
    uid: data['uid'],
    name: data['name'],
@@ -29,5 +29,5 @@ class Player {
     isActive: data['isActive'],
    cards: Map<String, Cards>.from(data['cards']),
   );
- }
+ }*/
 }

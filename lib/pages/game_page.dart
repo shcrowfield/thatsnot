@@ -1,4 +1,3 @@
-// lib/pages/game_page.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/lie_alert_dialog.dart';
@@ -29,16 +28,16 @@ class _GamePageState extends State<GamePage> {
     final buttonWidth = screenWidth * 0.23;
     final buttonHeight = screenHeight * 0.1;
     final textSize = screenWidth * 0.02;
-    final cardWidth = screenWidth * 0.13;
-    final cardHeight = screenHeight * 0.3;
+    //final cardWidth = screenWidth * 0.10;
+    // final cardHeight = screenHeight * 0.2;
     return {
       'screenWidth': screenWidth,
       'screenHeight': screenHeight,
       'buttonWidth': buttonWidth,
       'buttonHeight': buttonHeight,
       'textSize': textSize,
-      'cardWidth': cardWidth,
-      'cardHeight': cardHeight,
+      //'cardWidth': cardWidth,
+      //'cardHeight': cardHeight,
     };
   }
 
@@ -47,12 +46,9 @@ class _GamePageState extends State<GamePage> {
   @override
   initState() {
     super.initState();
-    DatabaseService(lobbyId: widget.lobbyId)
-        .updateDeck();
-    DatabaseService(lobbyId: widget.lobbyId)
-        .dealCards();
-    DatabaseService(lobbyId: widget.lobbyId)
-        .updateDrawPile();
+    DatabaseService(lobbyId: widget.lobbyId).updateDeck();
+    DatabaseService(lobbyId: widget.lobbyId).dealCards();
+    DatabaseService(lobbyId: widget.lobbyId).updateDrawPile();
   }
 
   dispose() {
@@ -92,7 +88,7 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  Future<bool> LieButtonIsActive(String uid) async {
+  Future<bool> lieButtonIsActive(String uid) async {
     var lobby = await _getLobbyData();
     String activePlayer = lobby['activePlayer'];
     bool isThereFirstCard = lobby['choosedCard'].isNotEmpty;
@@ -104,7 +100,7 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  void buttonIsAcive() async {
+  void lieButton() async {
     DatabaseService(lobbyId: widget.lobbyId).updateOpponentId(widget.user!.uid);
     var lobby = await _getLobbyData();
     Map<String, dynamic> choosedCard = lobby['choosedCard'];
@@ -122,7 +118,7 @@ class _GamePageState extends State<GamePage> {
             onButtonPressed: reBuild));
   }
 
-  Future getActivePlayerName(String activePlayerId) async {
+  Future getActivePlayerName() async {
     var lobby = await _getLobbyData();
     String activePlayerId = lobby['activePlayer'];
     Map<String, dynamic> returnMap =
@@ -152,211 +148,225 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          const SizedBox(height: 15),
-          TextButton.icon(
-            onPressed: () async {
-              var lobbyData = await _getLobbyData();
-              LobbyManager.checkPlayerMap(
-                  widget.lobbyId, widget.user, lobbyData['currentPlayerCount']);
-              LobbyManager.decreseIsReady(widget.lobbyId);
-              LobbyManager.decresePlayerLimit(widget.lobbyId);
-              onStartNext();
-            },
-            icon: const Icon(Icons.settings),
-            label: const Text('Menu'),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.deepPurple,
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/bg.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Column(
+          children: [
+            const SizedBox(height: 15),
+            TextButton.icon(
+              onPressed: () async {
+                var lobbyData = await _getLobbyData();
+                LobbyManager.checkPlayerMap(widget.lobbyId, widget.user,
+                    lobbyData['currentPlayerCount']);
+                LobbyManager.decreseIsReady(widget.lobbyId);
+                LobbyManager.decresePlayerLimit(widget.lobbyId);
+                onStartNext();
+              },
+              icon: const Icon(Icons.settings),
+              label: const Text('Menu'),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+              ),
             ),
-          ),
-          Expanded(
-              child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('lobbies')
-                    .doc(widget.lobbyId)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    String activePlayerId = snapshot.data?['activePlayer'];
-                    return FutureBuilder(
-                      future: getActivePlayerName(activePlayerId),
-                      builder: (context, activePlayerSnapshot) {
-                        if (activePlayerSnapshot.hasData) {
-                          return Column(
-                            children: [
-                              Text(
-                                  'Aktív játékos: ${activePlayerSnapshot.data}'),
-                              FutureBuilder(
-                                  future: getPlayerPoints(widget.user!.uid),
-                                  builder: (context, pointSnapshot) {
-                                    if (pointSnapshot.hasData) {
-                                      return Text(
-                                          'Pontok Lacikám: ${pointSnapshot.data}');
-                                    } else {
-                                      return Text('Loading...');
-                                    }
-                                  }),
-                            ],
-                          );
-                        } else {
-                          return Text('Loading...');
-                        }
-                      },
-                    );
-                  } else {
-                    return Text('Loading...');
-                  }
-                },
-              ),
-              Column(
-                children: [
-                  CountDown(controller: _controller),
-                  ElevatedButton(
-                      onPressed: () => _controller.start(),
-                      child: const Text('start')),
-                  ElevatedButton(
-                      onPressed: () async {
-                        await DatabaseService(lobbyId: widget.lobbyId)
-                            .drawCard();
-                        reBuild();
-                      },
-                      child: const Text('DRAW')),
-                ],
-              ),
-              StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('lobbies')
-                    .doc(widget.lobbyId)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData) {
-                    String liedColor = snapshot.data?['liedColor'];
-                    String? liedNumber =
-                        snapshot.data?['liedNumber'].toString();
-                    return Text('Bemondott: $liedColor $liedNumber');
-                  } else {
-                    return Text('Loading...');
-                  }
-                },
-              ),
-            ],
-          )),
-          Expanded(
-            //alignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.deepOrangeAccent,
-              child: Center(
-                  child: SizedBox(
-                height: sizes(context)['screenHeight'] * 0.5,
+            Expanded(
                 child: Row(
-                  children: [
-                    Column(
-                      children: [
-                        ElevatedButton(
-                            onPressed: reBuild,
-                            child: const Icon(Icons.refresh)),
-                        ElevatedButton(
-                            onPressed: () async {
-                              await LieButtonIsActive(widget.user!.uid)
-                                  ? buttonIsAcive()
-                                  : print(
-                                      'Te vagy az aktív játékos vagy nincs kártya kiválasztva');
-                            },
-                            child: const Text('LIE')),
-                      ],
-                    ),
-                    Expanded(
-                      child: StreamBuilder<Map<String, dynamic>?>(
-                        stream: getCards(widget.user!.uid),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const CircularProgressIndicator();
-                          } else if (snapshot.hasError) {
-                            return Text('Error: ${snapshot.error}');
-                          } else if (snapshot.hasData) {
-                            Map<String, dynamic> userCards = snapshot.data!;
-                            List<MapEntry<String, dynamic>> cardList =
-                                userCards.entries.toList();
-                            return SizedBox(
-                              width: double.infinity,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: cardList.length,
-                                itemBuilder: (context, index) {
-                                  return SizedBox(
-                                    width: sizes(context)['cardWidth'],
-                                    height: sizes(context)['cardHeight'],
-                                    child: InkWell(
-                                      onTap: () {
-                                        choosedCard = cardList[index];
-                                        showDialog(
-                                            context: context,
-                                            builder: (context) =>
-                                                SayAlertDialog(
-                                                  lobbyId: widget.lobbyId,
-                                                  user: widget.user,
-                                                  choosedCard: choosedCard,
-                                                  onButtonPressed: reBuild,
-                                                ));
-                                        reBuild();
-                                      },
-                                      child: Card(
-                                        color: Colors.black,
-                                        child: Center(
-                                          child: Image.asset(
-                                            '${cardList[index].value['image']}',
-                                            width: sizes(context)['cardWidth'] *
-                                                1.2,
-                                            height:
-                                                sizes(context)['cardHeight'] *
-                                                    1.2,
-                                          ),
-                                          /*Column(
-                                                children: [
-                                                  Text(cardList[index].value['color']),
-                                                  Text(cardList[index]
-                                                      .value['number']
-                                                      .toString()),
-                                                ],
-                                              ),*/
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('lobbies')
+                      .doc(widget.lobbyId)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      return FutureBuilder(
+                        future: getActivePlayerName(),
+                        builder: (context, activePlayerSnapshot) {
+                          if (activePlayerSnapshot.hasData) {
+                            return Column(
+                              children: [
+                                Text(
+                                    'Aktív játékos: ${activePlayerSnapshot.data}', style: const TextStyle(color: Colors.white),),
+                                FutureBuilder(
+                                    future: getPlayerPoints(widget.user!.uid),
+                                    builder: (context, pointSnapshot) {
+                                      if (pointSnapshot.hasData) {
+                                        return Text(
+                                            'Pontjaid: ${pointSnapshot.data}', style: const TextStyle(color: Colors.white),);
+                                      } else {
+                                        return Text('Loading...');
+                                      }
+                                    }),
+                              ],
                             );
+                          } else {
+                            return Text('Loading...');
                           }
-                          return const Text('Üres a kezed');
                         },
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        ElevatedButton(
-                            onPressed: () async {
-                              await DatabaseService(lobbyId: widget.lobbyId)
-                                  .incresePassCount();
-                              await DatabaseService(lobbyId: widget.lobbyId)
-                                  .checkActivePlayer();
-                              reBuild();
-                            },
-                            child: const Text('PASSZ')),
-                      ],
-                    ),
+                      );
+                    } else {
+                      return Text('Loading...');
+                    }
+                  },
+                ),
+                Column(
+                  children: [
+                    Spacer(),
+                    /*CountDown(controller: _controller),
+                    ElevatedButton(
+                        onPressed: () => _controller.start(),
+                        child: const Text('start')),*/
+                    InkWell(
+                        onTap: () async {
+                          await DatabaseService(lobbyId: widget.lobbyId)
+                              .drawCard();
+                          reBuild();
+                        },
+                        child: Image.asset(
+                          'assets/images/draw.webp',
+                          height: sizes(context)['screenHeight'] * 0.07,
+                        )),
                   ],
                 ),
-              )),
+                StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('lobbies')
+                      .doc(widget.lobbyId)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      String liedColor = snapshot.data?['liedColor'];
+                      String? liedNumber =
+                          snapshot.data?['liedNumber'].toString();
+                      return Text('Bemondott: $liedColor $liedNumber', style: const TextStyle(color: Colors.white),);
+                    } else {
+                      return Text('Loading...');
+                    }
+                  },
+                ),
+              ],
+            )),
+            Expanded(
+              //alignment: Alignment.bottomCenter,
+              child: Container(
+                color: Colors.transparent,
+                child: Center(
+                    child: SizedBox(
+                  height: sizes(context)['screenHeight'] * 0.5,
+                  child: Row(
+                    children: [
+                      Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: reBuild,
+                              child: const Icon(Icons.refresh)),
+                          ElevatedButton(
+                              onPressed: () async {
+                                await lieButtonIsActive(widget.user!.uid)
+                                    ? lieButton()
+                                    : print(
+                                        'Te vagy az aktív játékos vagy nincs kártya kiválasztva');
+                              },
+                              child: const Text('LIE')),
+                        ],
+                      ),
+                      Expanded(
+                        child: StreamBuilder<Map<String, dynamic>?>(
+                          stream: getCards(widget.user!.uid),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Text('Error: ${snapshot.error}');
+                            } else if (snapshot.hasData) {
+                              Map<String, dynamic> userCards = snapshot.data!;
+                              List<MapEntry<String, dynamic>> cardList =
+                                  userCards.entries.toList();
+                              return SizedBox(
+                                width: double.infinity,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: cardList.length,
+                                  itemBuilder: (context, index) {
+                                    return SizedBox(
+                                      width: sizes(context)['cardWidth'],
+                                      height: sizes(context)['cardHeight'],
+                                      child: InkWell(
+                                        onTap: () {
+                                          choosedCard = cardList[index];
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) =>
+                                                  SayAlertDialog(
+                                                    lobbyId: widget.lobbyId,
+                                                    user: widget.user,
+                                                    choosedCard: choosedCard,
+                                                    onButtonPressed: reBuild,
+                                                  ));
+                                          reBuild();
+                                        },
+                                        //child: Card(
+                                        //color: Colors.black,
+                                        child: Center(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Image.asset(
+                                              '${cardList[index].value['image']}',
+                                              /*width: sizes(context)['screenWidth'] *
+                                                    0.13,*/
+                                              height: sizes(
+                                                      context)['screenHeight'] *
+                                                  0.29,
+                                            ),
+                                          ),
+                                          /*Column(
+                                                  children: [
+                                                    Text(cardList[index].value['color']),
+                                                    Text(cardList[index]
+                                                        .value['number']
+                                                        .toString()),
+                                                  ],
+                                                ),*/
+                                        ),
+                                        //),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            }
+                            return const Text('Üres a kezed');
+                          },
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          ElevatedButton(
+                              onPressed: () async {
+                                await DatabaseService(lobbyId: widget.lobbyId)
+                                    .incresePassCount();
+                                await DatabaseService(lobbyId: widget.lobbyId)
+                                    .checkActivePlayer();
+                                reBuild();
+                              },
+                              child: const Text('PASSZ')),
+                        ],
+                      ),
+                    ],
+                  ),
+                )),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

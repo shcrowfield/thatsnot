@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/lobby_manager.dart';
@@ -169,9 +170,11 @@ class DatabaseService {
   Future<void> updatePlayer(Player player, int currentPlayerCount) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
+    int randomDelay = Random().nextInt(500) + 100;
 
     for (int i = 0; i < players.length; i++) {
       if (players[i]['uid'] == '') {
+        await Future.delayed(Duration(milliseconds: randomDelay));
         return await lobbyCollection.doc(lobbyId).update({
           'currentPlayerCount': currentPlayerCount + 1,
           'player${i + 1}': player.toMap()
@@ -241,7 +244,7 @@ class DatabaseService {
     }
   }
 
-  Future isHandEmpty(uid) async {
+  Future isHandEmpty(String uid) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> drawPile = await sortDrawPile();
@@ -251,9 +254,9 @@ class DatabaseService {
           Map<String, dynamic> player = players[i];
           Map<String, dynamic> playerCards = player['cards'];
           int points = player['points'];
-          Map<String, dynamic> drawnCard = Map.fromEntries(drawPile.entries.take(6));
-          playerCards.addAll(drawnCard);
-          drawPile.removeWhere((key, value) => drawnCard.containsKey(key));
+          Map<String, dynamic> drawnCards = Map.fromEntries(drawPile.entries.take(6));
+          playerCards.addAll(drawnCards);
+          drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
           await lobbyCollection.doc(lobbyId).update({
             'player${i + 1}.cards': playerCards,
             'player${i + 1}.points': FieldValue.increment(points + 10),

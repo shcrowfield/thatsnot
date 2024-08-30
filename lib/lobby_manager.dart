@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'language.dart';
+
 class LobbyManager {
   static Future<Map<String, dynamic>> getPlayersList(lobbyId) async {
     var documentSnapshot = await FirebaseFirestore.instance
@@ -74,6 +76,18 @@ class LobbyManager {
     Map<String, dynamic>? data = documentSnapshot.data();
     if (data?['currentPlayerCount'] == 0) {
       await documentSnapshot.reference.delete();
+    }
+  }
+
+  static String allowToJoin(int currentPlayerCount, int playerLimit,
+      String nickName) {
+    if (currentPlayerCount < playerLimit && nickName.isNotEmpty) {
+      return languageMap['Allow to Enter'] ?? "";
+    }
+    else if(currentPlayerCount < playerLimit && nickName.isEmpty) {
+      return languageMap['EnterNickname'] ?? "";
+    }else {
+      return languageMap['LobbyIsFull'] ?? "";
     }
   }
 }

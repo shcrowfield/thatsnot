@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/language.dart';
+import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:thatsnot/services/database.dart';
 import '../models/player.dart';
@@ -26,17 +27,6 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 
-  String _allowToJoin(int currentPlayerCount, int playerLimit,
-      String nickName) {
-    if (currentPlayerCount < playerLimit && nickName.isNotEmpty) {
-      return languageMap['Allow to Enter'] ?? "";
-    }
-    else if(currentPlayerCount < playerLimit && nickName.isEmpty) {
-      return languageMap['EnterNickname'] ?? "";
-    }else {
-    return languageMap['LobbyIsFull'] ?? "";
-    }
-  }
 
   @override
   void initState() {
@@ -106,12 +96,12 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                         title: Text(document['lobbyName'],
                             style: const TextStyle(color: Colors.white)),
                         subtitle: Text(
-                            "${document['currentPlayerCount']} / ${document['playerLimit']} players ${_allowToJoin(
+                            "${document['currentPlayerCount']} / ${document['playerLimit']} players ${LobbyManager.allowToJoin(
                                 document['currentPlayerCount'],
                                 document['playerLimit'], nickName)}",
                             style: const TextStyle(color: Colors.white)),
                         onTap: () async {
-                          _allowToJoin(document['currentPlayerCount'],
+                          LobbyManager.allowToJoin(document['currentPlayerCount'],
                               document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? player = Player(
                             name: '',
@@ -125,13 +115,13 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                             uid: widget.user!.uid,
                             isActive: false,
                           );
-                          _allowToJoin(document['currentPlayerCount'],
+                          LobbyManager.allowToJoin(document['currentPlayerCount'],
                               document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? null
                               : await DatabaseService(lobbyId: document.id)
                               .updatePlayer(
                               player, document['currentPlayerCount']);
-                          _allowToJoin(document['currentPlayerCount'],
+                          LobbyManager.allowToJoin(document['currentPlayerCount'],
                               document['playerLimit'], nickName) != languageMap['Allow to Enter']
                               ? null
                               : Navigator.push(

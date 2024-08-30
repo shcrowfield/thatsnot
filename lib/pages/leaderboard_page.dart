@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/language.dart';
+import 'package:thatsnot/pages/start_screen.dart';
 
 class LeaderboardPage extends StatefulWidget {
   final User? user;
@@ -12,6 +14,13 @@ class LeaderboardPage extends StatefulWidget {
 }
 
 class _LeaderboardPageState extends State<LeaderboardPage> {
+
+  _onStartNext() {
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => const StartPage()));
+  }
+
+
   Future<List<DocumentSnapshot>> getLeaderboard() async {
     var snapshot =
         await FirebaseFirestore.instance.collection('leaderboard').get();
@@ -47,9 +56,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
           ),
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            ElevatedButton(onPressed: _onStartNext, child: Text(languageMap['Back'] ?? '', style: const TextStyle( color: Colors.black))),
             FutureBuilder<List<DocumentSnapshot>>(
               future: getLeaderboard(),
               builder: (context, snapshot) {
@@ -68,7 +77,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                       var data = leaderboard[index].data() as Map<String, dynamic>;
                       return ListTile(
                         title: Text(data['name'] ?? '', style: TextStyle(fontSize: sizes(context)['textSize'], color: Colors.white)),
-                        subtitle: Text('Score: ${data['points'] ?? 0}', style: TextStyle(fontSize: sizes(context)['textSize'], color: Colors.white)),
+                        subtitle: Text('Pontok: ${data['points'] ?? 0}', style: TextStyle(fontSize: sizes(context)['textSize'], color: Colors.white)),
                       );
                     },
                   );
