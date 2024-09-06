@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/pages/leaderboard_page.dart';
 import 'package:thatsnot/pages/rules_screen.dart';
 import 'package:thatsnot/button_style.dart';
+import 'package:thatsnot/services/database.dart';
 import 'package:thatsnot/services/google_auth.dart';
 import 'package:thatsnot/pages/lobby_creation_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
@@ -56,8 +57,8 @@ class _StartPageState extends State<StartPage> {
   }
 
   _onResultsNext() {
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => LeaderboardPage(user: user)));
+    Navigator.pushReplacement(context,
+        MaterialPageRoute(builder: (context) => LeaderboardPage(user: user)));
   }
 
   Map<String, dynamic> sizes(BuildContext context) {
@@ -125,7 +126,9 @@ class _StartPageState extends State<StartPage> {
                             sizes(context)['buttonWidth'],
                             sizes(context)['buttonHeight'])),
                       ),
-                      child: Text(languageMap['CreateLobby'] ?? '', style: TextStyle(fontSize: sizes(context)['textSize'])),
+                      child: Text(languageMap['CreateLobby'] ?? '',
+                          style:
+                              TextStyle(fontSize: sizes(context)['textSize'])),
                     ),
                     SizedBox(height: sizes(context)['screenHeight'] * 0.01),
                     ElevatedButton(
@@ -188,7 +191,6 @@ class _StartPageState extends State<StartPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(50),
-
       ),
       child: DropdownButton<String>(
         value: dropdownValue,
@@ -230,10 +232,9 @@ class _StartPageState extends State<StartPage> {
           print(e);
         }
       },
-      style:  menuButtonStyle.copyWith(
+      style: menuButtonStyle.copyWith(
         minimumSize: WidgetStateProperty.all(Size(
-            sizes(context)['buttonWidth'],
-            sizes(context)['buttonHeight'])),
+            sizes(context)['buttonWidth'], sizes(context)['buttonHeight'])),
       ),
       child: Text(languageMap['SignIn'] ?? ''),
     );
@@ -250,10 +251,9 @@ class _StartPageState extends State<StartPage> {
               user = FirebaseAuth.instance.currentUser;
             });
           },
-          style:  menuButtonStyle.copyWith(
+          style: menuButtonStyle.copyWith(
             minimumSize: WidgetStateProperty.all(Size(
-                sizes(context)['buttonWidth'],
-                sizes(context)['buttonHeight'])),
+                sizes(context)['buttonWidth'], sizes(context)['buttonHeight'])),
           ),
           child: Text(languageMap['SignOut'] ?? ''),
         ),

@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/lie_alert_dialog.dart';
 import 'package:thatsnot/alert_dialogs/say_alert_dialog.dart';
+import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/countdown.dart';
+import 'package:thatsnot/models/card.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
@@ -21,6 +23,8 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   final CountdownController _controller = CountdownController(autoStart: false);
+  String text = '';
+  bool _initialized = false;
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -46,11 +50,10 @@ class _GamePageState extends State<GamePage> {
   @override
   initState() {
     super.initState();
-    DatabaseService(lobbyId: widget.lobbyId).updateDeck();
-    DatabaseService(lobbyId: widget.lobbyId).dealCards();
-    DatabaseService(lobbyId: widget.lobbyId).updateDrawPile();
+    // cardsStream = getCards(widget.user!.uid);
   }
 
+  @override
   dispose() {
     super.dispose();
   }
@@ -78,12 +81,27 @@ class _GamePageState extends State<GamePage> {
   }
 
   Stream<Map<String, dynamic>?> getCards(String uid) async* {
-    Map<String, dynamic> returnMap =
-        await LobbyManager.getPlayersList(widget.lobbyId);
-    List<Map<String, dynamic>> players = returnMap['players'];
-    for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == uid) {
-        yield players[i]['cards'];
+    if (!_initialized) {
+      await DatabaseService(lobbyId: widget.lobbyId).updateDeck();
+      await DatabaseService(lobbyId: widget.lobbyId).dealCards();
+      await DatabaseService(lobbyId: widget.lobbyId).updateDrawPile();
+      Map<String, dynamic> returnMap =
+          await LobbyManager.getPlayersList(widget.lobbyId);
+      List<Map<String, dynamic>> players = returnMap['players'];
+      for (int i = 0; i < players.length; i++) {
+        if (players[i]['uid'] == uid) {
+          yield players[i]['cards'];
+        }
+      }
+      _initialized = true;
+    }else{
+      Map<String, dynamic> returnMap =
+      await LobbyManager.getPlayersList(widget.lobbyId);
+      List<Map<String, dynamic>> players = returnMap['players'];
+      for (int i = 0; i < players.length; i++) {
+        if (players[i]['uid'] == uid) {
+          yield players[i]['cards'];
+        }
       }
     }
   }
@@ -144,7 +162,10 @@ class _GamePageState extends State<GamePage> {
 
   void reBuild() {
     setState(() {});
+    text = '';
   }
+
+  late Stream<Map<String, dynamic>?> cardsStream;
 
   @override
   Widget build(BuildContext context) {
@@ -193,13 +214,18 @@ class _GamePageState extends State<GamePage> {
                             return Column(
                               children: [
                                 Text(
-                                    'Aktív játékos: ${activePlayerSnapshot.data}', style: const TextStyle(color: Colors.white),),
+                                  'Aktív játékos: ${activePlayerSnapshot.data}',
+                                  style: const TextStyle(color: Colors.white),
+                                ),
                                 FutureBuilder(
                                     future: getPlayerPoints(widget.user!.uid),
                                     builder: (context, pointSnapshot) {
                                       if (pointSnapshot.hasData) {
                                         return Text(
-                                            'Pontjaid: ${pointSnapshot.data}', style: const TextStyle(color: Colors.white),);
+                                          'Pontjaid: ${pointSnapshot.data}',
+                                          style: const TextStyle(
+                                              color: Colors.white),
+                                        );
                                       } else {
                                         return Text('Loading...');
                                       }
@@ -227,7 +253,7 @@ class _GamePageState extends State<GamePage> {
                         onTap: () async {
                           await DatabaseService(lobbyId: widget.lobbyId)
                               .drawCard();
-                          reBuild();
+                          //reBuild();
                         },
                         child: Image.asset(
                           'assets/images/draw.webp',
@@ -245,7 +271,10 @@ class _GamePageState extends State<GamePage> {
                       String liedColor = snapshot.data?['liedColor'];
                       String? liedNumber =
                           snapshot.data?['liedNumber'].toString();
-                      return Text('Bemondott: $liedColor $liedNumber', style: const TextStyle(color: Colors.white),);
+                      return Text(
+                        'Bemondott: $liedColor $liedNumber',
+                        style: const TextStyle(color: Colors.white),
+                      );
                     } else {
                       return Text('Loading...');
                     }
@@ -268,19 +297,23 @@ class _GamePageState extends State<GamePage> {
                               onPressed: reBuild,
                               child: const Icon(Icons.refresh)),
                           ElevatedButton(
-                              onPressed: () async {
-                                await lieButtonIsActive(widget.user!.uid)
-                                    ? lieButton()
-                                    : print(
-                                        'Te vagy az aktív játékos vagy nincs kártya kiválasztva');
-                              },
-                              child: const Text('LIE')),
+                            onPressed: () async {
+                              await lieButtonIsActive(widget.user!.uid)
+                                  ? lieButton()
+                                  : setState(() {
+                                      text =
+                                          'Te vagy az aktív játékos vagy nincs kártya kiválasztva';
+                                    });
+                            },
+                            child: const Text('LIE'),
+                          ),
                         ],
                       ),
                       Expanded(
                         child: StreamBuilder<Map<String, dynamic>?>(
                           stream: getCards(widget.user!.uid),
                           builder: (context, snapshot) {
+                            ('snapshot: $snapshot');
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const CircularProgressIndicator();
@@ -327,14 +360,6 @@ class _GamePageState extends State<GamePage> {
                                                   0.29,
                                             ),
                                           ),
-                                          /*Column(
-                                                  children: [
-                                                    Text(cardList[index].value['color']),
-                                                    Text(cardList[index]
-                                                        .value['number']
-                                                        .toString()),
-                                                  ],
-                                                ),*/
                                         ),
                                         //),
                                       ),
@@ -365,6 +390,7 @@ class _GamePageState extends State<GamePage> {
                 )),
               ),
             ),
+            Text(text)
           ],
         ),
       ),

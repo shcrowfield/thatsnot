@@ -38,6 +38,27 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     };
   }
 
+  Future<List<String>> getPlayerNumber() async {
+    var documentSnapshot = await FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(widget.lobbyId)
+        .get();
+    Map<String, dynamic>? data = documentSnapshot.data();
+    List<String> playersNameList = [];
+    List<Map<String, dynamic>?> players = [
+      data?['player1'],
+      data?['player2'],
+      data?['player3'],
+      data?['player4']
+    ];
+    for (int i = 0; i < players.length; i++) {
+      if (players[i] != null && players[i]!['uid'] != '') {
+        playersNameList.add(players[i]!['name']);
+      }
+    }
+    return playersNameList;
+  }
+
   _isReadyCounter() async {
     var documentSnapshot = await FirebaseFirestore.instance
         .collection('lobbies')
@@ -132,42 +153,45 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                                   fontSize: sizes(context)['textSize'],
                                   color: Colors.white)),
                         ),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children:
-                                List.generate(currentPlayerCount!, (index) {
-                              int playerIndex = index + 1;
-                              return lobby['player$playerIndex'] != null
-                                  ? Padding(
+                        FutureBuilder<List<String>>(
+                          future: getPlayerNumber(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const CircularProgressIndicator();
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return const Center(child: Text('No players found'));
+                            } else {
+                              List<String> playerNames = snapshot.data!;
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: Row(
+                                  children: List.generate(playerNames.length, (index) {
+                                    return Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Row(
                                         children: [
                                           Icon(
                                             Icons.person,
                                             color: Colors.white,
-                                            size:
-                                                sizes(context)['screenWidth'] *
-                                                    0.05,
+                                            size: sizes(context)['screenWidth'] * 0.05,
                                           ),
-                                          SizedBox(
-                                              width: sizes(
-                                                      context)['screenWidth'] *
-                                                  0.01),
+                                          SizedBox(width: sizes(context)['screenWidth'] * 0.01),
                                           Text(
-                                            lobby['player$playerIndex']['name'],
+                                            playerNames[index],
                                             style: TextStyle(
-                                                fontSize:
-                                                    sizes(context)['textSize'] *
-                                                        2,
+                                                fontSize: sizes(context)['textSize'] * 2,
                                                 color: Colors.white),
                                           ),
                                         ],
                                       ),
-                                    )
-                                  : Container();
-                            }),
-                          ),
+                                    );
+                                  }),
+                                ),
+                              );
+                            }
+                          },
                         ),
                         ElevatedButton(
                           onPressed: () {
@@ -175,29 +199,26 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                               setState(() {
                                 isPressed = true;
                               });
-                              lobby.reference.update({
+                              FirebaseFirestore.instance
+                                  .collection('lobbies')
+                                  .doc(widget.lobbyId)
+                                  .update({
                                 'isReady': FieldValue.increment(1),
                               });
                             }
                             _isReadyCounter();
-                           /* DatabaseService(lobbyId: lobby['lobbyId'])
-                                .updateDeck();
-                            DatabaseService(lobbyId: lobby['lobbyId'])
-                                .dealCards();
-                            DatabaseService(lobbyId: lobby['lobbyId'])
-                                .updateDrawPile();*/
                           },
                           style: isPressed
                               ? choosedButtonStyle.copyWith(
-                                  minimumSize: WidgetStateProperty.all(Size(
-                                      sizes(context)['buttonWidth'],
-                                      sizes(context)['buttonHeight'])),
-                                )
+                            minimumSize: WidgetStateProperty.all(Size(
+                                sizes(context)['buttonWidth'],
+                                sizes(context)['buttonHeight'])),
+                          )
                               : menuButtonStyle.copyWith(
-                                  minimumSize: WidgetStateProperty.all(Size(
-                                      sizes(context)['buttonWidth'],
-                                      sizes(context)['buttonHeight'])),
-                                ),
+                            minimumSize: WidgetStateProperty.all(Size(
+                                sizes(context)['buttonWidth'],
+                                sizes(context)['buttonHeight'])),
+                          ),
                           child: Text(languageMap['Ready'] ?? ''),
                         ),
                       ],

@@ -13,6 +13,17 @@ class Cards {
   Map<String, dynamic> toMap() {
     return {'color': color, 'number': number, 'idNumber': idNumber, 'position': position, 'image': image};
   }
+
+  factory Cards.fromMap(Map<String, dynamic> map) {
+    return Cards(
+      color: map['color'] as String,
+      number: map['number'] as int,
+      idNumber: map['idNumber'] as int,
+      position: map['position'] as int,
+      image: map['image'] as String,
+    );
+  }
+
 }
 
 Map<String, dynamic> shuffleCards() {

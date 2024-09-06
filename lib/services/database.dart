@@ -1,20 +1,23 @@
 import 'dart:async';
 import 'dart:collection';
-import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/models/card.dart';
 import 'package:thatsnot/models/player.dart';
 import 'package:thatsnot/services/leaderboard.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class DatabaseService {
   String lobbyId;
 
+
   DatabaseService({required this.lobbyId});
 
   final CollectionReference lobbyCollection =
-      FirebaseFirestore.instance.collection('lobbies');
+  FirebaseFirestore.instance.collection('lobbies');
 
   Future updateDeck() async {
     Map<String, dynamic> originalMap = shuffleCards();
@@ -37,9 +40,9 @@ class DatabaseService {
 
     var sortedCards = SplayTreeMap<String, dynamic>.from(
       deck ?? {},
-      (key1, key2) {
+          (key1, key2) {
         int posCompare =
-            deck?[key1]['position'].compareTo(deck[key2]['position']);
+        deck?[key1]['position'].compareTo(deck[key2]['position']);
         return posCompare;
       },
     );
@@ -68,7 +71,7 @@ class DatabaseService {
       int endIdx = (i + 1) * cardsPerPlayer;
 
       List<String> cardKeys =
-          sortedDeck.keys.toList().sublist(startIdx, endIdx);
+      sortedDeck.keys.toList().sublist(startIdx, endIdx);
       for (String key in cardKeys) {
         playerCards[key] = sortedDeck[key] as Map<String, dynamic>;
       }
@@ -113,9 +116,9 @@ class DatabaseService {
 
     var sortedCards = SplayTreeMap<String, dynamic>.from(
       drawPile ?? {},
-      (key1, key2) {
+          (key1, key2) {
         int posCompare =
-            drawPile?[key1]['position'].compareTo(drawPile[key2]['position']);
+        drawPile?[key1]['position'].compareTo(drawPile[key2]['position']);
         return posCompare;
       },
     );
@@ -143,7 +146,7 @@ class DatabaseService {
         });
         drawPileIsEmpty(player);
         break;
-      }else{
+      } else {
         print('Nem a te köröd van');
       }
     }
@@ -156,7 +159,7 @@ class DatabaseService {
     Map<String, dynamic>? drawPile = lobby?['drawPile'];
     if (drawPile!.isEmpty) {
       endGameHandNotEmpty();
-      if(player['points'] != 0){
+      if (player['points'] != 0) {
         updateLeaderBoard(player);
       }
       print('Vége a Játéknak');
@@ -164,24 +167,102 @@ class DatabaseService {
   }
 
   Future updateLeaderBoard(player) async {
-      LeaderboardService(player).newOrExistingUser(player['uid'], player['name'], player['points']);
+    LeaderboardService(player).newOrExistingUser(
+        player['uid'], player['name'], player['points']);
+  }
+
+
+  Future<void> updateDocument() async {
+    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/on_request_example';
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+      }
+    } catch (e) {
+      print('Request failed with error: $e.');
+    }
+  }
+
+  Future<void> postData()async{
+    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/upload_data_from_flutter';
+    try{
+      final Map<String, dynamic> data = {
+        'title': 'Sir',
+        'name': 'BuleeAlee',
+        'number': 1,
+    };
+      final response = await http.post(Uri.parse(url),
+          headers:{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(data));
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+      } else {
+        print('Request failed with status: ${response.statusCode}.');
+      }
+  }catch(e){
+      print('Request failed with error: $e.');
+    }
+  }
+
+  Future<void> postUpdatePlayer(Player player, int currentPlayerCount)async{
+    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/update_player_hard';
+    //final url = 'https://us-central1-thatsnot-71ba4.cloudfunctions.net/update_player_hard';
+
+    try{
+      final Map<String, dynamic> data = {
+        'lobbyId': lobbyId,
+        'player': player.toMap(),
+        'currentPlayerCount': currentPlayerCount,
+      };
+      final response = await http.post(Uri.parse(url),
+          headers:{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(data));
+      if (response.statusCode == 200) {
+        print('Response body: ${response.body}');
+      } else {
+        print('Request failed with status: ${response.statusCode} ${response.body}.');
+      }
+    }catch(e){
+      print('Request failed with error: $e.');
+    }
   }
 
   Future<void> updatePlayer(Player player, int currentPlayerCount) async {
-    var returnMap = await LobbyManager.getPlayersList(lobbyId);
-    List<Map<String, dynamic>> players = returnMap['players'];
-    int randomDelay = Random().nextInt(500) + 100;
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot lobbyDoc = await transaction.get(
+          lobbyCollection.doc(lobbyId));
 
-    for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == '') {
-        await Future.delayed(Duration(milliseconds: randomDelay));
-        return await lobbyCollection.doc(lobbyId).update({
-          'currentPlayerCount': currentPlayerCount + 1,
-          'player${i + 1}': player.toMap()
-        });
+      var documentSnapshot = await FirebaseFirestore.instance
+          .collection('lobbies')
+          .doc(lobbyId)
+          .get();
+      Map<String, dynamic>? data = documentSnapshot.data();
+      Map<String, dynamic> player1 = data?['player1'];
+      Map<String, dynamic> player2 = data?['player2'];
+      Map<String, dynamic> player3 = data?['player3'];
+      Map<String, dynamic> player4 = data?['player4'];
+      List<Map<String, dynamic>> players = [player1, player2, player3, player4];
+
+      for (int i = 0; i < players.length; i++) {
+        if (players[i]['uid'] == '') {
+          transaction.update(lobbyDoc.reference, {
+            'currentPlayerCount': FieldValue.increment(1),
+            'player${i + 1}': player.toMap(),
+          });
+          return;
+        }
       }
-    }
+    });
   }
+
 
   Future<void> updateLies(String liedColor, int liedNumber,
       MapEntry<String, dynamic> choosedCard) async {
@@ -215,7 +296,7 @@ class DatabaseService {
       if (players[i]['uid'] == id) {
         return await lobbyCollection.doc(lobbyId).update({
           'player${i + 1}.points':
-              FieldValue.increment(lobby['discardPile'].length),
+          FieldValue.increment(lobby['discardPile'].length),
           'discardPile': {},
           'choosedCard': {},
         });
@@ -231,7 +312,7 @@ class DatabaseService {
       if (players[i]['uid'] == uid) {
         Map<String, dynamic> loserCards = players[i]['cards'];
         Map<String, dynamic> drawnCards =
-            Map.fromEntries(drawPile.entries.take(2));
+        Map.fromEntries(drawPile.entries.take(2));
         loserCards.addAll(drawnCards);
         drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
         return await lobbyCollection.doc(lobbyId).update({
@@ -254,7 +335,8 @@ class DatabaseService {
           Map<String, dynamic> player = players[i];
           Map<String, dynamic> playerCards = player['cards'];
           int points = player['points'];
-          Map<String, dynamic> drawnCards = Map.fromEntries(drawPile.entries.take(6));
+          Map<String, dynamic> drawnCards = Map.fromEntries(
+              drawPile.entries.take(6));
           playerCards.addAll(drawnCards);
           drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
           await lobbyCollection.doc(lobbyId).update({
@@ -269,29 +351,29 @@ class DatabaseService {
     }
   }
 
-  Future endGameHandNotEmpty() async{
+  Future endGameHandNotEmpty() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
-    for(int i = 0; i < players.length; i++){
+    for (int i = 0; i < players.length; i++) {
       Map<String, dynamic> playersCards = players[i]['cards'];
-      if(players[i]['cards'].isNotEmpty){
+      if (players[i]['cards'].isNotEmpty) {
         int cardsCount = players[i]['cards'].length;
         int antiCardCount = 0;
-        for(int j = 0; j < cardsCount; j++){
-          if(playersCards[j]['color'] == 'Anti Joker'){
+        for (int j = 0; j < cardsCount; j++) {
+          if (playersCards[j]['color'] == 'Anti Joker') {
             antiCardCount += 1;
             await lobbyCollection.doc(lobbyId).update({
-              'player${i + 1}.points': FieldValue.increment(cardsCount + antiCardCount * 9),
+              'player${i + 1}.points': FieldValue.increment(
+                  cardsCount + antiCardCount * 9),
             });
-
           }
         }
       }
     }
   }
 
-  Future<void> moveToDiscardPile(
-      MapEntry<String, dynamic> choosedCard, User user) async {
+  Future<void> moveToDiscardPile(MapEntry<String, dynamic> choosedCard,
+      User user) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     for (int i = 0; i < players.length; i++) {
@@ -354,26 +436,24 @@ class DatabaseService {
     }
   }
 
-  Future updateLobbyData(
-    String lobbyName,
-    int playerLimit,
-    int currentPlayerCount,
-    Player player1,
-    Player player2,
-    Player player3,
-    Player player4,
-    int isReady,
-    Map<String, dynamic> drawPile,
-    Map<String, dynamic> discardPile,
-    Map<String, dynamic> deck,
-    String activePlayer,
-    String liedColor,
-    int liedNumber,
-    Map<String, dynamic> choosedCard,
-    int passCount,
-    String oppoentId,
-    String lastCardPlayer,
-  ) async {
+  Future updateLobbyData(String lobbyName,
+      int playerLimit,
+      int currentPlayerCount,
+      Player player1,
+      Player player2,
+      Player player3,
+      Player player4,
+      int isReady,
+      Map<String, dynamic> drawPile,
+      Map<String, dynamic> discardPile,
+      Map<String, dynamic> deck,
+      String activePlayer,
+      String liedColor,
+      int liedNumber,
+      Map<String, dynamic> choosedCard,
+      int passCount,
+      String oppoentId,
+      String lastCardPlayer,) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
       'lobbyName': lobbyName,
