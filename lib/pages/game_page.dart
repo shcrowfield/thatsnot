@@ -23,7 +23,6 @@ class GamePage extends StatefulWidget {
 
 class _GamePageState extends State<GamePage> {
   final CountdownController _controller = CountdownController(autoStart: false);
-  String text = '';
   bool _initialized = false;
 
   Map<String, dynamic> sizes(BuildContext context) {
@@ -94,9 +93,9 @@ class _GamePageState extends State<GamePage> {
         }
       }
       _initialized = true;
-    }else{
+    } else {
       Map<String, dynamic> returnMap =
-      await LobbyManager.getPlayersList(widget.lobbyId);
+          await LobbyManager.getPlayersList(widget.lobbyId);
       List<Map<String, dynamic>> players = returnMap['players'];
       for (int i = 0; i < players.length; i++) {
         if (players[i]['uid'] == uid) {
@@ -162,7 +161,6 @@ class _GamePageState extends State<GamePage> {
 
   void reBuild() {
     setState(() {});
-    text = '';
   }
 
   late Stream<Map<String, dynamic>?> cardsStream;
@@ -244,15 +242,15 @@ class _GamePageState extends State<GamePage> {
                 ),
                 Column(
                   children: [
-                    Spacer(),
+                    const Spacer(),
                     /*CountDown(controller: _controller),
                     ElevatedButton(
                         onPressed: () => _controller.start(),
                         child: const Text('start')),*/
                     InkWell(
                         onTap: () async {
-                          await DatabaseService(lobbyId: widget.lobbyId)
-                              .drawCard();
+                            await DatabaseService(lobbyId: widget.lobbyId)
+                                .drawCard(widget.user!.uid);
                           //reBuild();
                         },
                         child: Image.asset(
@@ -300,10 +298,12 @@ class _GamePageState extends State<GamePage> {
                             onPressed: () async {
                               await lieButtonIsActive(widget.user!.uid)
                                   ? lieButton()
-                                  : setState(() {
-                                      text =
-                                          'Te vagy az aktív játékos vagy nincs kártya kiválasztva';
-                                    });
+                                  : ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Te vagy az aktív játékos vagy nincs kártya az asztalon'),
+                                      ),
+                                    );
                             },
                             child: const Text('LIE'),
                           ),
@@ -390,7 +390,6 @@ class _GamePageState extends State<GamePage> {
                 )),
               ),
             ),
-            Text(text)
           ],
         ),
       ),

@@ -9,15 +9,13 @@ import 'package:thatsnot/services/leaderboard.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-
 class DatabaseService {
   String lobbyId;
-
 
   DatabaseService({required this.lobbyId});
 
   final CollectionReference lobbyCollection =
-  FirebaseFirestore.instance.collection('lobbies');
+      FirebaseFirestore.instance.collection('lobbies');
 
   Future updateDeck() async {
     Map<String, dynamic> originalMap = shuffleCards();
@@ -40,9 +38,9 @@ class DatabaseService {
 
     var sortedCards = SplayTreeMap<String, dynamic>.from(
       deck ?? {},
-          (key1, key2) {
+      (key1, key2) {
         int posCompare =
-        deck?[key1]['position'].compareTo(deck[key2]['position']);
+            deck?[key1]['position'].compareTo(deck[key2]['position']);
         return posCompare;
       },
     );
@@ -71,7 +69,7 @@ class DatabaseService {
       int endIdx = (i + 1) * cardsPerPlayer;
 
       List<String> cardKeys =
-      sortedDeck.keys.toList().sublist(startIdx, endIdx);
+          sortedDeck.keys.toList().sublist(startIdx, endIdx);
       for (String key in cardKeys) {
         playerCards[key] = sortedDeck[key] as Map<String, dynamic>;
       }
@@ -116,24 +114,27 @@ class DatabaseService {
 
     var sortedCards = SplayTreeMap<String, dynamic>.from(
       drawPile ?? {},
-          (key1, key2) {
+      (key1, key2) {
         int posCompare =
-        drawPile?[key1]['position'].compareTo(drawPile[key2]['position']);
+            drawPile?[key1]['position'].compareTo(drawPile[key2]['position']);
         return posCompare;
       },
     );
     return sortedCards;
   }
 
-  Future<void> drawCard() async {
+  Future<void> drawCard(String uid) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     var documentSnapshot = returnMap['documentSnapshot'];
     Map<String, dynamic>? lobby = documentSnapshot.data();
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> sortedDrawPile = await sortDrawPile();
+    int currentPlayerCount = lobby?['currentPlayerCount'] ?? 0;
+
+    bool equal = uid == lobby?['activePlayer'];
 
     for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == lobby?['activePlayer']) {
+      if (players[i]['uid'] == lobby?['activePlayer'] && equal) {
         Map<String, dynamic> player = players[i];
         Map<String, dynamic> playerCards = player['cards'];
         MapEntry<String, dynamic> drawCard = sortedDrawPile.entries.first;
@@ -143,6 +144,7 @@ class DatabaseService {
         await lobbyCollection.doc(lobbyId).update({
           'player${i + 1}.cards': playerCards,
           'drawPile': sortedDrawPile,
+          'passCount': currentPlayerCount,
         });
         drawPileIsEmpty(player);
         break;
@@ -150,6 +152,7 @@ class DatabaseService {
         print('Nem a te köröd van');
       }
     }
+    checkActivePlayer();
   }
 
   Future<void> drawPileIsEmpty(Map<String, dynamic> player) async {
@@ -167,13 +170,13 @@ class DatabaseService {
   }
 
   Future updateLeaderBoard(player) async {
-    LeaderboardService(player).newOrExistingUser(
-        player['uid'], player['name'], player['points']);
+    LeaderboardService(player)
+        .newOrExistingUser(player['uid'], player['name'], player['points']);
   }
 
-
   Future<void> updateDocument() async {
-    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/on_request_example';
+    final url =
+        'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/on_request_example';
     try {
       final response = await http.get(Uri.parse(url));
 
@@ -187,16 +190,17 @@ class DatabaseService {
     }
   }
 
-  Future<void> postData()async{
-    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/upload_data_from_flutter';
-    try{
+  Future<void> postData() async {
+    final url =
+        'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/upload_data_from_flutter';
+    try {
       final Map<String, dynamic> data = {
         'title': 'Sir',
         'name': 'BuleeAlee',
         'number': 1,
-    };
+      };
       final response = await http.post(Uri.parse(url),
-          headers:{
+          headers: {
             'Content-Type': 'application/json; charset=UTF-8',
           },
           body: jsonEncode(data));
@@ -205,40 +209,42 @@ class DatabaseService {
       } else {
         print('Request failed with status: ${response.statusCode}.');
       }
-  }catch(e){
+    } catch (e) {
       print('Request failed with error: $e.');
     }
   }
 
-  Future<void> postUpdatePlayer(Player player, int currentPlayerCount)async{
-    final url = 'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/update_player_hard';
+  Future<void> postUpdatePlayer(Player player, int currentPlayerCount) async {
+    final url =
+        'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/update_player_hard';
     //final url = 'https://us-central1-thatsnot-71ba4.cloudfunctions.net/update_player_hard';
 
-    try{
+    try {
       final Map<String, dynamic> data = {
         'lobbyId': lobbyId,
         'player': player.toMap(),
         'currentPlayerCount': currentPlayerCount,
       };
       final response = await http.post(Uri.parse(url),
-          headers:{
+          headers: {
             'Content-Type': 'application/json; charset=UTF-8',
           },
           body: jsonEncode(data));
       if (response.statusCode == 200) {
         print('Response body: ${response.body}');
       } else {
-        print('Request failed with status: ${response.statusCode} ${response.body}.');
+        print(
+            'Request failed with status: ${response.statusCode} ${response.body}.');
       }
-    }catch(e){
+    } catch (e) {
       print('Request failed with error: $e.');
     }
   }
 
   Future<void> updatePlayer(Player player, int currentPlayerCount) async {
     await FirebaseFirestore.instance.runTransaction((transaction) async {
-      DocumentSnapshot lobbyDoc = await transaction.get(
-          lobbyCollection.doc(lobbyId));
+      DocumentSnapshot lobbyDoc =
+          await transaction.get(lobbyCollection.doc(lobbyId));
 
       var documentSnapshot = await FirebaseFirestore.instance
           .collection('lobbies')
@@ -262,7 +268,6 @@ class DatabaseService {
       }
     });
   }
-
 
   Future<void> updateLies(String liedColor, int liedNumber,
       MapEntry<String, dynamic> choosedCard) async {
@@ -296,7 +301,7 @@ class DatabaseService {
       if (players[i]['uid'] == id) {
         return await lobbyCollection.doc(lobbyId).update({
           'player${i + 1}.points':
-          FieldValue.increment(lobby['discardPile'].length),
+              FieldValue.increment(lobby['discardPile'].length),
           'discardPile': {},
           'choosedCard': {},
         });
@@ -312,7 +317,7 @@ class DatabaseService {
       if (players[i]['uid'] == uid) {
         Map<String, dynamic> loserCards = players[i]['cards'];
         Map<String, dynamic> drawnCards =
-        Map.fromEntries(drawPile.entries.take(2));
+            Map.fromEntries(drawPile.entries.take(2));
         loserCards.addAll(drawnCards);
         drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
         return await lobbyCollection.doc(lobbyId).update({
@@ -335,8 +340,8 @@ class DatabaseService {
           Map<String, dynamic> player = players[i];
           Map<String, dynamic> playerCards = player['cards'];
           int points = player['points'];
-          Map<String, dynamic> drawnCards = Map.fromEntries(
-              drawPile.entries.take(6));
+          Map<String, dynamic> drawnCards =
+              Map.fromEntries(drawPile.entries.take(6));
           playerCards.addAll(drawnCards);
           drawPile.removeWhere((key, value) => drawnCards.containsKey(key));
           await lobbyCollection.doc(lobbyId).update({
@@ -363,8 +368,8 @@ class DatabaseService {
           if (playersCards[j]['color'] == 'Anti Joker') {
             antiCardCount += 1;
             await lobbyCollection.doc(lobbyId).update({
-              'player${i + 1}.points': FieldValue.increment(
-                  cardsCount + antiCardCount * 9),
+              'player${i + 1}.points':
+                  FieldValue.increment(cardsCount + antiCardCount * 9),
             });
           }
         }
@@ -372,8 +377,8 @@ class DatabaseService {
     }
   }
 
-  Future<void> moveToDiscardPile(MapEntry<String, dynamic> choosedCard,
-      User user) async {
+  Future<void> moveToDiscardPile(
+      MapEntry<String, dynamic> choosedCard, User user) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     for (int i = 0; i < players.length; i++) {
@@ -436,24 +441,26 @@ class DatabaseService {
     }
   }
 
-  Future updateLobbyData(String lobbyName,
-      int playerLimit,
-      int currentPlayerCount,
-      Player player1,
-      Player player2,
-      Player player3,
-      Player player4,
-      int isReady,
-      Map<String, dynamic> drawPile,
-      Map<String, dynamic> discardPile,
-      Map<String, dynamic> deck,
-      String activePlayer,
-      String liedColor,
-      int liedNumber,
-      Map<String, dynamic> choosedCard,
-      int passCount,
-      String oppoentId,
-      String lastCardPlayer,) async {
+  Future updateLobbyData(
+    String lobbyName,
+    int playerLimit,
+    int currentPlayerCount,
+    Player player1,
+    Player player2,
+    Player player3,
+    Player player4,
+    int isReady,
+    Map<String, dynamic> drawPile,
+    Map<String, dynamic> discardPile,
+    Map<String, dynamic> deck,
+    String activePlayer,
+    String liedColor,
+    int liedNumber,
+    Map<String, dynamic> choosedCard,
+    int passCount,
+    String oppoentId,
+    String lastCardPlayer,
+  ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
       'lobbyName': lobbyName,
