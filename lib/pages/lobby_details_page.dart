@@ -75,6 +75,15 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     }
   }
 
+  isReadyTransaction() async {
+    FirebaseFirestore.instance.runTransaction((transaction) async {
+      DocumentSnapshot snapshot = await transaction.get(
+          FirebaseFirestore.instance.collection('lobbies').doc(widget.lobbyId));
+      int currentReady = snapshot['isReady'];
+      transaction.update(snapshot.reference, {'isReady': currentReady + 1});
+    });
+  }
+
   _onLobbyListNext() {
     Navigator.pushReplacement(
         context,
@@ -156,18 +165,23 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                         FutureBuilder<List<String>>(
                           future: getPlayerNumber(),
                           builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
                               return const CircularProgressIndicator();
                             } else if (snapshot.hasError) {
-                              return Center(child: Text('Error: ${snapshot.error}'));
-                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(child: Text('No players found'));
+                              return Center(
+                                  child: Text('Error: ${snapshot.error}'));
+                            } else if (!snapshot.hasData ||
+                                snapshot.data!.isEmpty) {
+                              return const Center(
+                                  child: Text('No players found'));
                             } else {
                               List<String> playerNames = snapshot.data!;
                               return SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: Row(
-                                  children: List.generate(playerNames.length, (index) {
+                                  children: List.generate(playerNames.length,
+                                      (index) {
                                     return Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: Row(
@@ -175,13 +189,20 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                                           Icon(
                                             Icons.person,
                                             color: Colors.white,
-                                            size: sizes(context)['screenWidth'] * 0.05,
+                                            size:
+                                                sizes(context)['screenWidth'] *
+                                                    0.05,
                                           ),
-                                          SizedBox(width: sizes(context)['screenWidth'] * 0.01),
+                                          SizedBox(
+                                              width: sizes(
+                                                      context)['screenWidth'] *
+                                                  0.01),
                                           Text(
                                             playerNames[index],
                                             style: TextStyle(
-                                                fontSize: sizes(context)['textSize'] * 2,
+                                                fontSize:
+                                                    sizes(context)['textSize'] *
+                                                        2,
                                                 color: Colors.white),
                                           ),
                                         ],
@@ -199,26 +220,21 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                               setState(() {
                                 isPressed = true;
                               });
-                              FirebaseFirestore.instance
-                                  .collection('lobbies')
-                                  .doc(widget.lobbyId)
-                                  .update({
-                                'isReady': FieldValue.increment(1),
-                              });
+                              isReadyTransaction();
                             }
                             _isReadyCounter();
                           },
                           style: isPressed
                               ? choosedButtonStyle.copyWith(
-                            minimumSize: WidgetStateProperty.all(Size(
-                                sizes(context)['buttonWidth'],
-                                sizes(context)['buttonHeight'])),
-                          )
+                                  minimumSize: WidgetStateProperty.all(Size(
+                                      sizes(context)['buttonWidth'],
+                                      sizes(context)['buttonHeight'])),
+                                )
                               : menuButtonStyle.copyWith(
-                            minimumSize: WidgetStateProperty.all(Size(
-                                sizes(context)['buttonWidth'],
-                                sizes(context)['buttonHeight'])),
-                          ),
+                                  minimumSize: WidgetStateProperty.all(Size(
+                                      sizes(context)['buttonWidth'],
+                                      sizes(context)['buttonHeight'])),
+                                ),
                           child: Text(languageMap['Ready'] ?? ''),
                         ),
                       ],

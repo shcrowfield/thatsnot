@@ -110,7 +110,7 @@ class _GamePageState extends State<GamePage> {
     String activePlayer = lobby['activePlayer'];
     bool isThereFirstCard = lobby['choosedCard'].isNotEmpty;
     bool isPlayerTurn = activePlayer == uid;
-    if (isThereFirstCard && isPlayerTurn) {
+    if (isThereFirstCard && !isPlayerTurn) {
       return true;
     } else {
       return false;
@@ -118,21 +118,45 @@ class _GamePageState extends State<GamePage> {
   }
 
   void lieButton() async {
-    DatabaseService(lobbyId: widget.lobbyId).updateOpponentId(widget.user!.uid);
-    var lobby = await _getLobbyData();
-    Map<String, dynamic> choosedCard = lobby['choosedCard'];
-    String choosedColor = choosedCard.values.first['color'];
-    bool colorMatch = compareColor(choosedColor, lobby['liedColor']);
-    int choosedNumber = choosedCard.values.first['number'];
-    bool numberMatch = compareNumber(choosedNumber, lobby['liedNumber']);
-    showDialog(
-        context: context,
-        builder: (context) => LieAlertDialog(
-            lobbyId: widget.lobbyId,
-            lobby: lobby,
-            colorMatch: colorMatch,
-            numberMatch: numberMatch,
-            onButtonPressed: reBuild));
+    try {
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        DocumentSnapshot lobbyDoc = await transaction.get(FirebaseFirestore
+            .instance
+            .collection('lobbies')
+            .doc(widget.lobbyId));
+
+        if (lobbyDoc.get('opponentId') != '' && lobbyDoc.get('opponentId') != widget.user?.uid) {
+          showDialog(
+              context: context,
+              builder: (context) => const AlertDialog(
+                    title: Text('Már valaki más mond'),
+                  ));
+          return;
+        }
+        transaction.update(
+          lobbyDoc.reference,
+          {
+            'opponentId': widget.user!.uid,
+          },
+        );
+        Map<String, dynamic> choosedCard = lobbyDoc.get('choosedCard');
+        String choosedColor = choosedCard.values.first['color'];
+        bool colorMatch = compareColor(choosedColor, lobbyDoc.get('liedColor'));
+        int choosedNumber = choosedCard.values.first['number'];
+        bool numberMatch =
+            compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
+        showDialog(
+            context: context,
+            builder: (context) => LieAlertDialog(
+                lobbyId: widget.lobbyId,
+                lobby: lobbyDoc.data() as Map<String, dynamic>,
+                colorMatch: colorMatch,
+                numberMatch: numberMatch,
+                onButtonPressed: reBuild));
+      });
+    } catch (e) {
+      print('Error: $e');
+    }
   }
 
   Future getActivePlayerName() async {
@@ -179,86 +203,55 @@ class _GamePageState extends State<GamePage> {
         body: Column(
           children: [
             const SizedBox(height: 15),
-            TextButton.icon(
-              onPressed: () async {
-                var lobbyData = await _getLobbyData();
-                LobbyManager.checkPlayerMap(widget.lobbyId, widget.user,
-                    lobbyData['currentPlayerCount']);
-                LobbyManager.decreseIsReady(widget.lobbyId);
-                LobbyManager.decresePlayerLimit(widget.lobbyId);
-                onStartNext();
-              },
-              icon: const Icon(Icons.settings),
-              label: const Text('Menu'),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
+            Padding(
+              padding: const EdgeInsets.all(15.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  FutureBuilder(
+                      future: getPlayerPoints(widget.user!.uid),
+                      builder: (context, pointSnapshot) {
+                        if (pointSnapshot.hasData) {
+                          return Text(
+                            'Pontjaid: ${pointSnapshot.data}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                          );
+                        } else {
+                          return const Text('Loading...');
+                        }
+                      }),
+                  TextButton.icon(
+                    onPressed: () async {
+                      var lobbyData = await _getLobbyData();
+                      LobbyManager.checkPlayerMap(widget.lobbyId, widget.user,
+                          lobbyData['currentPlayerCount']);
+                      LobbyManager.decreseIsReady(widget.lobbyId);
+                      LobbyManager.decresePlayerLimit(widget.lobbyId);
+                      onStartNext();
+                    },
+                    label:
+                        const Text('Kilépés', style: TextStyle(fontSize: 20)),
+                    icon: const Icon(Icons.arrow_forward),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
-                child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                StreamBuilder(
-                  stream: FirebaseFirestore.instance
-                      .collection('lobbies')
-                      .doc(widget.lobbyId)
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return FutureBuilder(
-                        future: getActivePlayerName(),
-                        builder: (context, activePlayerSnapshot) {
-                          if (activePlayerSnapshot.hasData) {
-                            return Column(
-                              children: [
-                                Text(
-                                  'Aktív játékos: ${activePlayerSnapshot.data}',
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                                FutureBuilder(
-                                    future: getPlayerPoints(widget.user!.uid),
-                                    builder: (context, pointSnapshot) {
-                                      if (pointSnapshot.hasData) {
-                                        return Text(
-                                          'Pontjaid: ${pointSnapshot.data}',
-                                          style: const TextStyle(
-                                              color: Colors.white),
-                                        );
-                                      } else {
-                                        return Text('Loading...');
-                                      }
-                                    }),
-                              ],
-                            );
-                          } else {
-                            return Text('Loading...');
-                          }
-                        },
-                      );
-                    } else {
-                      return Text('Loading...');
-                    }
-                  },
-                ),
-                Column(
-                  children: [
-                    const Spacer(),
-                    /*CountDown(controller: _controller),
+                //const Spacer(),
+                /*CountDown(controller: _controller),
                     ElevatedButton(
                         onPressed: () => _controller.start(),
                         child: const Text('start')),*/
-                    InkWell(
-                        onTap: () async {
-                            await DatabaseService(lobbyId: widget.lobbyId)
-                                .drawCard(widget.user!.uid);
-                          //reBuild();
-                        },
-                        child: Image.asset(
-                          'assets/images/draw.webp',
-                          height: sizes(context)['screenHeight'] * 0.07,
-                        )),
-                  ],
-                ),
+
                 StreamBuilder(
                   stream: FirebaseFirestore.instance
                       .collection('lobbies')
@@ -269,15 +262,66 @@ class _GamePageState extends State<GamePage> {
                       String liedColor = snapshot.data?['liedColor'];
                       String? liedNumber =
                           snapshot.data?['liedNumber'].toString();
-                      return Text(
-                        'Bemondott: $liedColor $liedNumber',
-                        style: const TextStyle(color: Colors.white),
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 100),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Column(
+                                children: [
+                                  FutureBuilder(
+                                    future: getActivePlayerName(),
+                                    builder: (context, activePlayerSnapshot) {
+                                      if (activePlayerSnapshot.hasData) {
+                                        return Column(
+                                          children: [
+                                            Text(
+                                              'Soron lévő játékos: ${activePlayerSnapshot.data}',
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      } else {
+                                        return const Text('Loading...');
+                                      }
+                                    },
+                                  ),
+                                  Text(
+                                    'Bemondott: $liedColor $liedNumber',
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     } else {
-                      return Text('Loading...');
+                      return const Text('Loading...');
                     }
                   },
                 ),
+                const Spacer(),
+                InkWell(
+                    onTap: () async {
+                      await DatabaseService(lobbyId: widget.lobbyId)
+                          .drawCard(widget.user!.uid);
+                      //reBuild();
+                    },
+                    child: Image.asset(
+                      'assets/images/draw.webp',
+                      height: sizes(context)['screenHeight'] * 0.07,
+                    )),
               ],
             )),
             Expanded(
@@ -333,18 +377,33 @@ class _GamePageState extends State<GamePage> {
                                       width: sizes(context)['cardWidth'],
                                       height: sizes(context)['cardHeight'],
                                       child: InkWell(
-                                        onTap: () {
-                                          choosedCard = cardList[index];
-                                          showDialog(
-                                              context: context,
-                                              builder: (context) =>
-                                                  SayAlertDialog(
-                                                    lobbyId: widget.lobbyId,
-                                                    user: widget.user,
-                                                    choosedCard: choosedCard,
-                                                    onButtonPressed: reBuild,
-                                                  ));
-                                          reBuild();
+                                        onTap: () async {
+                                          final lobbyData =
+                                              await _getLobbyData();
+                                          final bool isNotAllowed =
+                                              lobbyData['lastCardPlayer'] == widget.user!.uid ||
+                                                  lobbyData['activePlayer'] != widget.user!.uid;
+                                          if (isNotAllowed) {
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Már tettél le lapot vagy nem te vagy soron'),
+                                              ),
+                                            );
+                                          } else {
+                                            choosedCard = cardList[index];
+                                            showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    SayAlertDialog(
+                                                      lobbyId: widget.lobbyId,
+                                                      user: widget.user,
+                                                      choosedCard: choosedCard,
+                                                      onButtonPressed: reBuild,
+                                                    ));
+                                            reBuild();
+                                          }
                                         },
                                         //child: Card(
                                         //color: Colors.black,

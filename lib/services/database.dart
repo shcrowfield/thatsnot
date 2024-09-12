@@ -293,7 +293,7 @@ class DatabaseService {
     });
   }
 
-  Future<void> increseWinnerPoints(String id) async {
+  Future<void> increseWinnerPointsAndRestoreData(String id) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
@@ -304,6 +304,9 @@ class DatabaseService {
               FieldValue.increment(lobby['discardPile'].length),
           'discardPile': {},
           'choosedCard': {},
+          'lastCardPlayer': '',
+          'liedColor': '',
+          'liedNumber': 0,
         });
       }
     }
@@ -364,15 +367,15 @@ class DatabaseService {
       if (players[i]['cards'].isNotEmpty) {
         int cardsCount = players[i]['cards'].length;
         int antiCardCount = 0;
-        for (int j = 0; j < cardsCount; j++) {
-          if (playersCards[j]['color'] == 'Anti Joker') {
+        playersCards.forEach((key, card) async {
+          if (card['color'] == 'Anti Joker') {
             antiCardCount += 1;
             await lobbyCollection.doc(lobbyId).update({
               'player${i + 1}.points':
                   FieldValue.increment(cardsCount + antiCardCount * 9),
             });
           }
-        }
+        });
       }
     }
   }

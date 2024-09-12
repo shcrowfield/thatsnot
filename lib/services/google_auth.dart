@@ -23,6 +23,12 @@ class GoogleAuth {
     };
   }
 
+  getUserName() {
+    for (var userInfo in user!.providerData) {
+      return userInfo.displayName;
+    }
+  }
+
   Future<void> signIn() async {
     try {
       final GoogleSignInAccount? googleSignInAccount =
@@ -34,9 +40,30 @@ class GoogleAuth {
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
         );
-        final UserCredential authResult =
-            await _auth.signInWithCredential(credential);
-        user = authResult.user;
+
+        user = FirebaseAuth.instance.currentUser;
+        if (user != null && user!.isAnonymous) {
+          try {
+            final UserCredential userCredential =
+                await user!.linkWithCredential(credential);
+            user = userCredential.user;
+            print('Anonymous user linked to Google account');
+          } catch (e) {
+            print(e);
+            if (e is FirebaseAuthException &&
+                e.code == 'credential-already-in-use') {
+              final authResult = await _auth.signInWithCredential(credential);
+              user = authResult.user;
+              print('Anonymous user already linked to Google account');
+            } else {
+              print(e);
+            }
+          }
+        } else {
+          final UserCredential authResult =
+              await _auth.signInWithCredential(credential);
+          user = authResult.user;
+        }
       }
     } catch (e) {
       print(e);
@@ -47,18 +74,19 @@ class GoogleAuth {
     await _auth.signOut();
     await _googleSignIn.signOut();
     user = null;
+    await FirebaseAuth.instance.signInAnonymously();
+    user = FirebaseAuth.instance.currentUser;
   }
 
   Widget buildGoogleSignInOutButton(BuildContext context,
       VoidCallback signInCallback, VoidCallback signOutCallback) {
-
-
-    if (user == null) {
+    if (user == null || user!.isAnonymous) {
       return ElevatedButton.icon(
         onPressed: signInCallback,
         style: googleButtonStyle.copyWith(
-          minimumSize: WidgetStateProperty.all<Size>(
-              Size(buttonSizes(context)['buttonWidth'], buttonSizes(context)['buttonHeight'])),
+          minimumSize: WidgetStateProperty.all<Size>(Size(
+              buttonSizes(context)['buttonWidth'],
+              buttonSizes(context)['buttonHeight'])),
         ),
         icon: const Icon(FontAwesomeIcons.google),
         label: Text(languageMap['GoogleSignIn'] ?? ''),
@@ -73,7 +101,7 @@ class GoogleAuth {
             icon: const Icon(FontAwesomeIcons.google),
             label: Text(languageMap['GoogleSignOut'] ?? ''),
           ),
-          Text('Bejelentkezve: ${user!.displayName}'),
+          //Text('Bejelentkezve: ${getUserName()}', style: const TextStyle(fontSize: 20, color: Colors.white)),
         ],
       );
     }

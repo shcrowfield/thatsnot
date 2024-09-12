@@ -56,7 +56,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   onPressed: () async {
                     if (widget.colorMatch) {
                       DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPoints(widget.lobby['lastCardPlayer']);
+                          .increseWinnerPointsAndRestoreData(widget.lobby['lastCardPlayer']);
                       winner = widget.lobby['lastCardPlayer'];
                       winnerName = await _getWinnerName(winner);
                       DatabaseService(lobbyId: widget.lobbyId)
@@ -65,7 +65,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                           .drawForLoser(widget.lobby['opponentId']);
                     } else {
                       DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPoints(widget.lobby['opponentId']);
+                          .increseWinnerPointsAndRestoreData(widget.lobby['opponentId']);
                       winner = widget.lobby['opponentId'];
                       winnerName = await _getWinnerName(winner);
                       DatabaseService(lobbyId: widget.lobbyId)
@@ -84,7 +84,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   onPressed: () async {
                     if (widget.numberMatch) {
                       DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPoints(widget.lobby['lastCardPlayer']);
+                          .increseWinnerPointsAndRestoreData(widget.lobby['lastCardPlayer']);
                       winner = widget.lobby['lastCardPlayer'];
                       winnerName = await _getWinnerName(winner);
                       DatabaseService(lobbyId: widget.lobbyId)
@@ -93,7 +93,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                           .drawForLoser(widget.lobby['opponentId']);
                     } else {
                       DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPoints(widget.lobby['opponentId']);
+                          .increseWinnerPointsAndRestoreData(widget.lobby['opponentId']);
                       winner = widget.lobby['opponentId'];
                       winnerName = await _getWinnerName(winner);
                       DatabaseService(lobbyId: widget.lobbyId)

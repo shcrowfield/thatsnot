@@ -8,6 +8,7 @@ import 'package:thatsnot/services/google_auth.dart';
 import 'package:thatsnot/pages/lobby_creation_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
 import 'package:thatsnot/language.dart';
+import 'package:thatsnot/services/leaderboard.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -22,6 +23,7 @@ class _StartPageState extends State<StartPage> {
   String nickName = '';
   late TextEditingController nickNameController;
   String dropdownValue = 'Hun';
+  Map<String, dynamic> anyad = {};
 
   @override
   initState() {
@@ -60,6 +62,19 @@ class _StartPageState extends State<StartPage> {
     Navigator.pushReplacement(context,
         MaterialPageRoute(builder: (context) => LeaderboardPage(user: user)));
   }
+
+  String? getLoginType() {
+    if (user != null) {
+      for (var userInfo in user!.providerData) {
+        if (userInfo.providerId == 'google.com') {
+          return 'Google: ${userInfo.displayName}';
+        }
+      }
+      return 'Anonymous';
+    }
+    return null;
+  }
+
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -109,19 +124,45 @@ class _StartPageState extends State<StartPage> {
                     _googleAuth.buildGoogleSignInOutButton(context, () async {
                       await _googleAuth.signIn();
                       setState(() {});
+                      user = FirebaseAuth.instance.currentUser;
                     }, () async {
                       await _googleAuth.signOut();
-                      setState(() {});
+                      setState(() {
+                        user = FirebaseAuth.instance.currentUser;
+                      });
                     }),
+                    Text(getLoginType() ?? '',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: sizes(context)['textSize'])),
+                    /*ElevatedButton(onPressed: (){
+                      LeaderboardService(anyad).setLeaderboardData('uid', 'name', 666);
+                    }, child: Text('set')),
+                    ElevatedButton(onPressed: (){
+                      LeaderboardService(anyad).updateLeaderboardData('uid', 10);
+                    }, child: Text('update')),
+                    ElevatedButton(onPressed: (){
+                      LeaderboardService(anyad).newOrExistingUser('uidd', 'name', 10);
+                    }, child: Text('newOrExisting')),*/
                   ],
                 ),
                 Column(
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                        _onLobbyNext();
+                      getLoginType() != 'Anonymous' ?
+                        _onLobbyNext() : ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Jelenleg csak Google fiókkal tudsz lobbit létrehozni!'),
+                        ),
+                      );
                       },
-                      style: menuButtonStyle.copyWith(
+                      style: getLoginType() != 'Anonymous' ? menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ) :
+                      disabledMenuButtonStyle.copyWith(
                         minimumSize: WidgetStateProperty.all(Size(
                             sizes(context)['buttonWidth'],
                             sizes(context)['buttonHeight'])),
@@ -145,9 +186,19 @@ class _StartPageState extends State<StartPage> {
                     SizedBox(height: sizes(context)['screenHeight'] * 0.01),
                     ElevatedButton(
                       onPressed: () {
-                        _onResultsNext();
+                        getLoginType() != 'Anonymous' ?
+                        _onResultsNext() : ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Jelenleg csak Google fiókkal tudsz eredményeket megtekinteni!'),
+                          ),
+                        );
                       },
-                      style: menuButtonStyle.copyWith(
+                      style: getLoginType() != 'Anonymous' ? menuButtonStyle.copyWith(
+                        minimumSize: WidgetStateProperty.all(Size(
+                            sizes(context)['buttonWidth'],
+                            sizes(context)['buttonHeight'])),
+                      ):
+                      disabledMenuButtonStyle.copyWith(
                         minimumSize: WidgetStateProperty.all(Size(
                             sizes(context)['buttonWidth'],
                             sizes(context)['buttonHeight'])),
