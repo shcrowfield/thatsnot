@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -22,6 +24,45 @@ class LobbyDetailsPage extends StatefulWidget {
 class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
   int? currentPlayerCount;
   bool isPressed = false;
+  late Stream<DocumentSnapshot> lobbyStream;
+  bool _hasNavigated = false;
+  late StreamSubscription<DocumentSnapshot> _lobbySubscription;
+
+  @override
+  initState() {
+    super.initState();
+    lobbyStream = FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(widget.lobbyId)
+        .snapshots();
+
+    _lobbySubscription =lobbyStream.listen((snapshot) {
+      if (snapshot.exists && mounted) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        if (data['isReady'] == data['playerLimit']) {
+          _navigateToGamePage();
+        }
+      }
+    });
+  }
+
+  void _navigateToGamePage() {
+    if (!_hasNavigated) {
+      _hasNavigated = true;
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  GamePage(lobbyId: widget.lobbyId, user: widget.user)));
+      print('Navigated to game page');
+    }
+  }
+
+  @override
+  dispose() {
+    _lobbySubscription.cancel();
+    super.dispose();
+  }
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -59,7 +100,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
     return playersNameList;
   }
 
-  _isReadyCounter() async {
+  /*_isReadyCounter() async {
     var documentSnapshot = await FirebaseFirestore.instance
         .collection('lobbies')
         .doc(widget.lobbyId)
@@ -73,14 +114,14 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                   GamePage(lobbyId: widget.lobbyId, user: widget.user)));
       print('All players are ready');
     }
-  }
+  }*/
 
   isReadyTransaction() async {
     FirebaseFirestore.instance.runTransaction((transaction) async {
       DocumentSnapshot snapshot = await transaction.get(
           FirebaseFirestore.instance.collection('lobbies').doc(widget.lobbyId));
-      int currentReady = snapshot['isReady'];
-      transaction.update(snapshot.reference, {'isReady': currentReady + 1});
+      transaction
+          .update(snapshot.reference, {'isReady': FieldValue.increment(1)});
     });
   }
 
@@ -129,16 +170,13 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                 ),
               ),
               StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('lobbies')
-                    .doc(widget.lobbyId)
-                    .snapshots(),
+                stream: lobbyStream,
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return const CircularProgressIndicator();
                   } else {
                     var lobby = snapshot.data!;
-                    currentPlayerCount = lobby['currentPlayerCount'];
+                      currentPlayerCount = lobby['currentPlayerCount'];
                     return Column(
                       children: [
                         ListTile(
@@ -214,28 +252,31 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                             }
                           },
                         ),
-                        ElevatedButton(
-                          onPressed: () {
-                            if (!isPressed) {
-                              setState(() {
-                                isPressed = true;
-                              });
-                              isReadyTransaction();
-                            }
-                            _isReadyCounter();
-                          },
-                          style: isPressed
-                              ? choosedButtonStyle.copyWith(
-                                  minimumSize: WidgetStateProperty.all(Size(
-                                      sizes(context)['buttonWidth'],
-                                      sizes(context)['buttonHeight'])),
-                                )
-                              : menuButtonStyle.copyWith(
-                                  minimumSize: WidgetStateProperty.all(Size(
-                                      sizes(context)['buttonWidth'],
-                                      sizes(context)['buttonHeight'])),
-                                ),
-                          child: Text(languageMap['Ready'] ?? ''),
+                        StatefulBuilder(
+                          builder: (context, setState) =>
+                           ElevatedButton(
+                            onPressed: () {
+                              if (!isPressed) {
+                                setState(() {
+                                  isPressed = true;
+                                });
+                                isReadyTransaction();
+                              }
+                              //_isReadyCounter();
+                            },
+                            style: isPressed
+                                ? choosedButtonStyle.copyWith(
+                                    minimumSize: WidgetStateProperty.all(Size(
+                                        sizes(context)['buttonWidth'],
+                                        sizes(context)['buttonHeight'])),
+                                  )
+                                : menuButtonStyle.copyWith(
+                                    minimumSize: WidgetStateProperty.all(Size(
+                                        sizes(context)['buttonWidth'],
+                                        sizes(context)['buttonHeight'])),
+                                  ),
+                            child: Text(languageMap['Ready'] ?? ''),
+                          ),
                         ),
                       ],
                     );

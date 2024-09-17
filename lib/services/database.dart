@@ -175,7 +175,7 @@ class DatabaseService {
   }
 
   Future<void> updateDocument() async {
-    final url =
+    const url =
         'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/on_request_example';
     try {
       final response = await http.get(Uri.parse(url));
@@ -191,7 +191,7 @@ class DatabaseService {
   }
 
   Future<void> postData() async {
-    final url =
+    const url =
         'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/upload_data_from_flutter';
     try {
       final Map<String, dynamic> data = {
@@ -215,7 +215,7 @@ class DatabaseService {
   }
 
   Future<void> postUpdatePlayer(Player player, int currentPlayerCount) async {
-    final url =
+    const url =
         'http://10.0.2.2:5001/thatsnot-71ba4/us-central1/update_player_hard';
     //final url = 'https://us-central1-thatsnot-71ba4.cloudfunctions.net/update_player_hard';
 

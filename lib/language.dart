@@ -40,24 +40,24 @@ final Map<String, String> langMapHun = {
   'LobbyIsFull': 'A lobbi megtelt'
 };
 final Map<String, String> langMapTur = {
-  'Back': 'törökVissza',
-  'CreateLobby': 'törökLobbi készítése',
-  'ActiveLobbies': 'törökAktív lobbik',
-  'Results': 'törökEredmények',
-  'SignIn': 'törökBejelentkezés',
-  'SignOut': 'törökKijelentkezés',
-  'GoogleSignOut': 'törökKijeletkezés Googleból',
-  'GoogleSignIn': 'törökGoogle bejelentkezés',
-  'Rules': 'törökSzabályok',
-  'Next': 'törökTovább',
-  'NumberOfPlayers': 'törökJátékosok száma:',
-  'LobbyName': 'törökLobbi neve',
-  'Nickname': 'törökBecenév',
-  'EnterNickname': 'Adj meg egy törökBecenevet',
-  'Players': 'törökJátékosok',
-  'Ready': 'törökMehet',
-  'Allow to Enter': 'törökBeléphet',
-  'LobbyIsFull': 'törökTele'
+  'Back': 'Geri',
+  'CreateLobby': 'Lobi oluştur',
+  'ActiveLobbies': 'Aktif lobiler',
+  'Results': 'Sonuçlar',
+  'SignIn': 'Giriş yap',
+  'SignOut': 'Çıkış yap',
+  'GoogleSignOut': 'Google çıkış',
+  'GoogleSignIn': 'Google giriş',
+  'Rules': 'Kurallar',
+  'Next': 'Sonraki',
+  'NumberOfPlayers': 'Oyuncu sayısı:',
+  'LobbyName': 'Lobinin adı',
+  'Nickname': 'Rumuz',
+  'EnterNickname': 'Rumuz gir',
+  'Players': 'Oyuncular',
+  'Ready': 'Hazır',
+  'Allow to Enter': 'Girilebilir',
+  'LobbyIsFull': 'Lobi dolu'
 };
 
 Map<String, String> languageMap = langMapHun;
