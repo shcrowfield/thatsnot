@@ -92,59 +92,65 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                   }
                   return ListView(
                     children: snapshot.data!.docs.map((document) {
-                      return ListTile(
-                          title: Text(document['lobbyName'],
-                              style: const TextStyle(color: Colors.white)),
-                          subtitle: Text(
-                              "${document['currentPlayerCount']} / ${document['playerLimit']} players ${LobbyManager.allowToJoin(document['currentPlayerCount'], document['playerLimit'], nickName)}",
-                              style: const TextStyle(color: Colors.white)),
-                          onTap: () async {
-                            if (isLobbyPressed) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('You are already in a lobby'),
-                                ),
-                              );
-                              return;
-                            }
+                      return Column(
+                        children: [
+                          ListTile(
+                              title: Text(document['lobbyName'],
+                                  style: const TextStyle(color: Colors.white)),
+                              subtitle: Text(
+                                  "${document['currentPlayerCount']} / ${document['playerLimit']} players ${LobbyManager.allowToJoin(document['currentPlayerCount'], document['playerLimit'], nickName)}",
+                                  style: const TextStyle(color: Colors.white)),
+                              onTap: () async {
+                                if (isLobbyPressed) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('You are already in a lobby'),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                isLobbyPressed = true;
 
-                            isLobbyPressed =
-                                true; // Set the flag to true to prevent multiple joins
+                                final canJoin = LobbyManager.allowToJoin(
+                                      document['currentPlayerCount'],
+                                      document['playerLimit'],
+                                      nickName,
+                                    ) ==
+                                    languageMap['Allow to Enter'];
 
-                            final canJoin = LobbyManager.allowToJoin(
-                                  document['currentPlayerCount'],
-                                  document['playerLimit'],
-                                  nickName,
-                                ) ==
-                                languageMap['Allow to Enter'];
+                                if (canJoin) {
+                                  final player = Player(
+                                    name: nickName,
+                                    points: 0,
+                                    uid: widget.user!.uid,
+                                    isActive: false,
+                                  );
 
-                            if (canJoin) {
-                              final player = Player(
-                                name: nickName,
-                                points: 0,
-                                uid: widget.user!.uid,
-                                isActive: false,
-                              );
+                                  await DatabaseService(lobbyId: document.id)
+                                      .updatePlayer(player,
+                                          document['currentPlayerCount']);
 
-                              await DatabaseService(lobbyId: document.id)
-                                  .updatePlayer(
-                                      player, document['currentPlayerCount']);
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => LobbyDetailsPage(
-                                    lobbyId: document.id,
-                                    user: widget.user,
-                                    nickName: nickName,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              isLobbyPressed =
-                                  false; // Reset the flag if the join is not successful
-                            }
-                          });
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => LobbyDetailsPage(
+                                        lobbyId: document.id,
+                                        user: widget.user,
+                                        nickName: nickName,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  isLobbyPressed = false;
+                                }
+                              }),
+                          const Divider(
+                            height: 5,
+                            color: Colors.white,
+                          ),
+                        ],
+                      );
                     }).toList(),
                   );
                 },

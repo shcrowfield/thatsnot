@@ -5,21 +5,27 @@ import 'language.dart';
 
 class LobbyManager {
   static Future<Map<String, dynamic>> getPlayersList(lobbyId) async {
-    var documentSnapshot = await FirebaseFirestore.instance
+ return getPlayersListStream(lobbyId).first;
+
+  }
+
+  static Stream<Map<String, dynamic>> getPlayersListStream(lobbyId) async* {
+    await for (var snapshot in FirebaseFirestore.instance
         .collection('lobbies')
         .doc(lobbyId)
-        .get();
-    Map<String, dynamic>? data = documentSnapshot.data();
-    Map<String, dynamic> player1 = data?['player1'];
-    Map<String, dynamic> player2 = data?['player2'];
-    Map<String, dynamic> player3 = data?['player3'];
-    Map<String, dynamic> player4 = data?['player4'];
-    List<Map<String, dynamic>> players = [player1, player2, player3, player4];
-    Map<String, dynamic> returnMap = {
-      'players': players,
-      'documentSnapshot': documentSnapshot
-    };
-    return returnMap;
+        .snapshots()) {
+      Map<String, dynamic>? data = snapshot.data();
+      Map<String, dynamic> player1 = data?['player1'];
+      Map<String, dynamic> player2 = data?['player2'];
+      Map<String, dynamic> player3 = data?['player3'];
+      Map<String, dynamic> player4 = data?['player4'];
+      List<Map<String, dynamic>> players = [player1, player2, player3, player4];
+      Map<String, dynamic> returnMap = {
+        'players': players,
+        'documentSnapshot': snapshot
+      };
+      yield returnMap;
+    }
   }
 
   static void checkPlayerMap(lobbyId, user, currentPlayerCount) async {

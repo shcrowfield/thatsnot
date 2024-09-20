@@ -13,22 +13,27 @@ class LeaderboardService {
   Future setLeaderboardData(String uid, String name, int points) async {
     User user = FirebaseAuth.instance.currentUser!;
     String userName = user.providerData[0].displayName!;
+    List<int> wins = [points];
     return await lobbyCollection.doc(uid).set({
       'name': userName,
       'uid': uid,
       'nickName': name,
       'points': points,
-      'wins': 1,
+      'winCounter': 1,
+      'wins': wins,
     });
   }
 
   Future updateLeaderboardData(String uid, int points) async {
     var document = await lobbyCollection.doc(uid).get();
     int currentPoint = document['points'];
-    points += currentPoint;
+    int newPoint = points + currentPoint;
+    List<dynamic> currentWins = List.from(document['wins'] ?? []);
+    currentWins.add(points);
     return await lobbyCollection.doc(uid).update({
-      'points': points,
-      'wins': FieldValue.increment(1),
+      'points': newPoint,
+      'winCounter': FieldValue.increment(1),
+      'wins': currentWins,
     });
   }
 

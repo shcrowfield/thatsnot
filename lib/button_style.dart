@@ -35,4 +35,9 @@ final ButtonStyle diabledGameButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white38,
   foregroundColor: Colors.black,
 );
-
+final ButtonStyle sideButtonStyle = ElevatedButton.styleFrom(
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(15.0),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
+);

@@ -151,6 +151,7 @@ class DatabaseService {
       } else {
         print('Nem a te köröd van');
       }
+
     }
     checkActivePlayer();
   }
@@ -293,7 +294,14 @@ class DatabaseService {
     });
   }
 
-  Future<void> increseWinnerPointsAndRestoreData(String id) async {
+  Future<void> updateResult(String winnerId, String answer) async {
+    return await lobbyCollection.doc(lobbyId).update({
+      'winnerId': winnerId,
+      'answer': answer,
+    });
+  }
+
+  Future<void> increseWinnerPoints(String id) async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> lobby = returnMap['documentSnapshot'].data();
@@ -302,14 +310,23 @@ class DatabaseService {
         return await lobbyCollection.doc(lobbyId).update({
           'player${i + 1}.points':
               FieldValue.increment(lobby['discardPile'].length),
-          'discardPile': {},
-          'choosedCard': {},
-          'lastCardPlayer': '',
-          'liedColor': '',
-          'liedNumber': 0,
         });
       }
     }
+  }
+
+  Future<void> restoreData() async {
+    return await lobbyCollection.doc(lobbyId).update({
+      'discardPile': {},
+      'choosedCard': {},
+      'lastCardPlayer': '',
+      'liedColor': '',
+      'liedNumber': 0,
+      'opponentId': '',
+      'answer': '',
+      'winnerId': '',
+
+    });
   }
 
   Future<void> drawForLoser(String uid) async {
@@ -327,7 +344,6 @@ class DatabaseService {
           'player${i + 1}.cards': loserCards,
           'drawPile': drawPile,
           'activePlayer': uid,
-          'opponentId': '',
         });
       }
     }
@@ -463,6 +479,8 @@ class DatabaseService {
     int passCount,
     String oppoentId,
     String lastCardPlayer,
+      String winnerId,
+      String answer,
   ) async {
     return await lobbyCollection.doc(lobbyId).set({
       'lobbyId': lobbyId,
@@ -484,6 +502,8 @@ class DatabaseService {
       'passCount': passCount,
       'opponentId': oppoentId,
       'lastCardPlayer': lastCardPlayer,
+      'winnerId': winnerId,
+      'answer': answer,
     });
   }
 }

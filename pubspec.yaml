@@ -44,6 +44,7 @@ dependencies:
   timer_count_down: ^2.2.2
   cloud_functions: ^4.7.6
   http: ^1.2.2
+  d_chart: ^2.8.0
   #vertical_listtile: ^0.0.6
 
 dev_dependencies:

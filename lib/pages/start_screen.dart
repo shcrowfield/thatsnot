@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/pages/leaderboard_page.dart';
 import 'package:thatsnot/pages/rules_screen.dart';
 import 'package:thatsnot/button_style.dart';
-import 'package:thatsnot/services/database.dart';
 import 'package:thatsnot/services/google_auth.dart';
 import 'package:thatsnot/pages/lobby_creation_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
@@ -135,15 +134,15 @@ class _StartPageState extends State<StartPage> {
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: sizes(context)['textSize'])),
-                    /*ElevatedButton(onPressed: (){
-                      LeaderboardService(anyad).setLeaderboardData('uid', 'name', 666);
+                    ElevatedButton(onPressed: (){
+                      LeaderboardService(anyad).setLeaderboardData('SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 'name', 10);
                     }, child: Text('set')),
                     ElevatedButton(onPressed: (){
-                      LeaderboardService(anyad).updateLeaderboardData('uid', 10);
+                      LeaderboardService(anyad).updateLeaderboardData('SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 50);
                     }, child: Text('update')),
                     ElevatedButton(onPressed: (){
                       LeaderboardService(anyad).newOrExistingUser('uidd', 'name', 10);
-                    }, child: Text('newOrExisting')),*/
+                    }, child: Text('newOrExisting')),
                   ],
                 ),
                 Column(

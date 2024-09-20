@@ -1,21 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../lobby_manager.dart';
-import '../services/database.dart';
+import 'package:thatsnot/alert_dialogs/result_alert_dialog.dart';
+import 'package:thatsnot/services/database.dart';
 
 class LieAlertDialog extends StatefulWidget {
   final String lobbyId;
-  final Map<String, dynamic> lobby;
   final bool colorMatch;
   final bool numberMatch;
   final VoidCallback onButtonPressed;
 
-  const LieAlertDialog(
-      {super.key,
-      required this.lobbyId,
-      required this.lobby,
-      required this.colorMatch,
-      required this.numberMatch,
-      required this.onButtonPressed});
+  const LieAlertDialog({
+    super.key,
+    required this.lobbyId,
+    required this.colorMatch,
+    required this.numberMatch,
+    required this.onButtonPressed,
+  });
 
   @override
   State<LieAlertDialog> createState() => _LieAlertDialogState();
@@ -23,107 +23,138 @@ class LieAlertDialog extends StatefulWidget {
 
 class _LieAlertDialogState extends State<LieAlertDialog> {
   bool answerPressed = false;
-  String winner = '';
-  String? winnerName;
+  late DatabaseService db;
+  late Map<String, dynamic> _lobby;
+  late Future <Map<String, dynamic>> _lobbyDataFuture;
 
-  _getChoosedCard() {
-    var firstEntry = widget.lobby['choosedCard'].entries.first;
+  @override
+  void initState() {
+    super.initState();
+    db = DatabaseService(lobbyId: widget.lobbyId);
+    _lobbyDataFuture = _getLobby();
+  }
+
+  Future<Map<String, dynamic>> _getLobby() async {
+    try {
+      final lobbyResult = (await FirebaseFirestore.instance
+              .collection('lobbies')
+              .doc(widget.lobbyId)
+              .get())
+          .data();
+      if (lobbyResult == null) {
+        throw Exception('Lobby not found');
+      }
+      _lobby = lobbyResult;
+    } catch (e) {
+      print('Anyád: $e');
+    }
+    return _lobby;
+  }
+
+  void _onResultNext() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ResultAlertDialog(
+          lobbyId: widget.lobbyId,
+        ),
+      ),
+    );
+  }
+
+  Future<Map<String, dynamic>> _getChoosedCard() async {
+    var firstEntry = _lobby['choosedCard'].entries.first;
     String color = firstEntry.value['color'];
     int number = firstEntry.value['number'];
     return {'color': color, 'number': number};
-  }
-
-  _getWinnerName(String winner) async {
-      Map<String, dynamic> returnMap =
-      await LobbyManager.getPlayersList(widget.lobbyId);
-      List<Map<String, dynamic>> players = returnMap['players'];
-      for (int i = 0; i < players.length; i++) {
-        if (players[i]['uid'] == winner) {
-          return players[i]['name'];
-        }
-      }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Miben hazudott?'),
-      content: Column(
-        children: [
-          Row(
-            children: [
-              ElevatedButton(
-                  onPressed: () async {
-                    if (widget.colorMatch) {
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPointsAndRestoreData(widget.lobby['lastCardPlayer']);
-                      winner = widget.lobby['lastCardPlayer'];
-                      winnerName = await _getWinnerName(winner);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .isHandEmpty(widget.lobby['lastCardPlayer']);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .drawForLoser(widget.lobby['opponentId']);
-                    } else {
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPointsAndRestoreData(widget.lobby['opponentId']);
-                      winner = widget.lobby['opponentId'];
-                      winnerName = await _getWinnerName(winner);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .drawForLoser(widget.lobby['lastCardPlayer']);
-                    }
-                    setState(() {
-                      answerPressed = true;
-                    });
-                    await DatabaseService(lobbyId: widget.lobbyId)
-                        .incresePassCount();
-                    await DatabaseService(lobbyId: widget.lobbyId)
-                        .checkActivePlayer();
-                  },
-                  child: Text('Nem ${widget.lobby['liedColor']}')),
-              ElevatedButton(
-                  onPressed: () async {
-                    if (widget.numberMatch) {
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPointsAndRestoreData(widget.lobby['lastCardPlayer']);
-                      winner = widget.lobby['lastCardPlayer'];
-                      winnerName = await _getWinnerName(winner);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .isHandEmpty(widget.lobby['lastCardPlayer']);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .drawForLoser(widget.lobby['opponentId']);
-                    } else {
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .increseWinnerPointsAndRestoreData(widget.lobby['opponentId']);
-                      winner = widget.lobby['opponentId'];
-                      winnerName = await _getWinnerName(winner);
-                      DatabaseService(lobbyId: widget.lobbyId)
-                          .drawForLoser(widget.lobby['lastCardPlayer']);
-                    }
-                    setState(() {
-                      answerPressed = true;
-                    });
-                    await DatabaseService(lobbyId: widget.lobbyId)
-                        .incresePassCount();
-                    await DatabaseService(lobbyId: widget.lobbyId)
-                        .checkActivePlayer();
-                  },
-                  child: Text('Nem ${widget.lobby['liedNumber']}')),
-            ],
-          ),
-          Text(answerPressed
-              ? 'A bemondott lap: ${widget.lobby['liedColor']} ${widget.lobby['liedNumber']}'
-              : 'A bemondott lap: '),
-          Text(answerPressed
-              ? 'A valós lap: ${_getChoosedCard()['color']} ${_getChoosedCard()['number']}'
-              : 'A valós lap: '),
-          Text(answerPressed ? 'A nyertes: $winnerName' : 'A nyertes: '),
-          ElevatedButton(
-              onPressed: () {
-                widget.onButtonPressed();
-                Navigator.pop(context);
-              },
-              child: const Text('OK'))
-        ],
+      content: FutureBuilder<Map<String, dynamic>>(
+        future: _lobbyDataFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Text('Error loading data: ${snapshot.error}');
+          } else if (!snapshot.hasData) {
+            return const Text('No data found');
+          } else {
+            final data = snapshot.data;
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (widget.colorMatch) {
+                          await db.updateResult(
+                              _lobby['lastCardPlayer'], _lobby['liedColor']);
+                          await db
+                              .increseWinnerPoints(_lobby['lastCardPlayer']);
+                          await db.isHandEmpty(_lobby['lastCardPlayer']);
+                          await db.drawForLoser(_lobby['opponentId']);
+                        } else {
+                          await db.updateResult(
+                              _lobby['opponentId'], _lobby['liedColor']);
+                          await db.increseWinnerPoints(_lobby['opponentId']);
+                          await db.drawForLoser(_lobby['lastCardPlayer']);
+                        }
+                        setState(() {
+                          answerPressed = true;
+                        });
+                        await db.incresePassCount();
+                        await db.checkActivePlayer();
+                        _onResultNext();
+                      },
+                      child: Text('Nem ${_lobby['liedColor']}'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (widget.numberMatch) {
+                          await db.updateResult(_lobby['lastCardPlayer'],
+                              _lobby['liedNumber'].toString());
+                          await db
+                              .increseWinnerPoints(_lobby['lastCardPlayer']);
+                          await db.isHandEmpty(_lobby['lastCardPlayer']);
+                          await db.drawForLoser(_lobby['opponentId']);
+                        } else {
+                          await db.updateResult(_lobby['opponentId'],
+                              _lobby['liedNumber'].toString());
+                          await db.increseWinnerPoints(_lobby['opponentId']);
+                          await db.drawForLoser(_lobby['lastCardPlayer']);
+                        }
+                        setState(() {
+                          answerPressed = true;
+                        });
+                        await db.incresePassCount();
+                        await db.checkActivePlayer();
+                        _onResultNext();
+                      },
+                      child: Text('Nem ${_lobby['liedNumber'].toString()}'),
+                    ),
+                  ],
+                ),
+                Text(answerPressed
+                    ? 'A bemondott lap: ${_lobby['liedColor']} ${_lobby['liedNumber']}'
+                    : 'A bemondott lap: '),
+                Text(answerPressed
+                    ? 'A valós lap:' /*${_getChoosedCard()} ${_getChoosedCard()}'*/
+                    : 'A valós lap: '),
+                Text(answerPressed ? 'A nyertes:' : 'A nyertes: '),
+                ElevatedButton(
+                  onPressed: widget.onButtonPressed,
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          }
+        },
       ),
     );
   }

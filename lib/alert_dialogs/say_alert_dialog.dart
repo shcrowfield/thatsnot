@@ -31,11 +31,13 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
   int liedNumber = 0;
   String liedCard = '';
   Future<void> _dropdownEntriesFuture = Future<void>.value();
+  late DatabaseService db;
 
   @override
   void initState() {
     super.initState();
-    _dropdownEntriesFuture =getDropdownEntries();
+    _dropdownEntriesFuture = getDropdownEntries();
+    db = DatabaseService(lobbyId: widget.lobbyId);
   }
 
   @override
@@ -51,7 +53,10 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
     var lobby = snapshot.data();
     String lobbyLiedColor = lobby!['liedColor'];
     int lobbyLiedNumber = lobby['liedNumber'];
-    return {'lobbyLiedColor': lobbyLiedColor, 'lobbyLiedNumber': lobbyLiedNumber};
+    return {
+      'lobbyLiedColor': lobbyLiedColor,
+      'lobbyLiedNumber': lobbyLiedNumber
+    };
   }
 
   Future<void> getDropdownEntries() async {
@@ -74,16 +79,17 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
         ];
       }
 
-      if(lobbyLiedNumber == 0 || lobbyLiedNumber == 9){
+      if (lobbyLiedNumber == 0 || lobbyLiedNumber == 9) {
         numberDropdownEntries = const [
           DropdownMenuEntry(value: 1, label: '1'),
           DropdownMenuEntry(value: 2, label: '2'),
           DropdownMenuEntry(value: 3, label: '3'),
-
         ];
       } else {
-        numberDropdownEntries = List.generate(9 - lobbyLiedNumber , (index){
-          return DropdownMenuEntry(value: lobbyLiedNumber + index+1, label: (lobbyLiedNumber + index+1).toString());
+        numberDropdownEntries = List.generate(9 - lobbyLiedNumber, (index) {
+          return DropdownMenuEntry(
+              value: lobbyLiedNumber + index + 1,
+              label: (lobbyLiedNumber + index + 1).toString());
         });
       }
 
@@ -93,15 +99,12 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
           selectedColor = colorDropdownMenuEntries.first.value;
           numberDropdownEntries = numberDropdownEntries;
           selectedNumber = numberDropdownEntries.first.value;
-          print('van valami');
         });
       }
     } catch (e) {
       print('Error: $e');
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -133,83 +136,42 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       liedNumber = value!;
                     });
                   },
-                  dropdownMenuEntries:
-                  numberDropdownEntries,
+                  dropdownMenuEntries: numberDropdownEntries,
                 ),
               ],
             );
           }
         },
       ),
-      /*Row(
-        children: [
-          DropdownMenu(
-            enableSearch: false,
-            onSelected: (value) {
-              setState(() {
-                liedColor = value!;
-              });
-            },
-            dropdownMenuEntries: const [
-              DropdownMenuEntry(value: 'Purple', label: 'Purple'),
-              DropdownMenuEntry(value: 'Orange', label: 'Orange'),
-              DropdownMenuEntry(value: 'Black', label: 'Black'),
-            ],
-          ),
-          DropdownMenu(
-            enableSearch: false,
-            onSelected: (value) {
-              setState(() {
-                liedNumber = value!;
-              });
-            },
-            dropdownMenuEntries: const [
-              DropdownMenuEntry(value: 1, label: '1'),
-              DropdownMenuEntry(value: 2, label: '2'),
-              DropdownMenuEntry(value: 3, label: '3'),
-              DropdownMenuEntry(value: 4, label: '4'),
-              DropdownMenuEntry(value: 5, label: '5'),
-              DropdownMenuEntry(value: 6, label: '6'),
-              DropdownMenuEntry(value: 7, label: '7'),
-              DropdownMenuEntry(value: 8, label: '8'),
-              DropdownMenuEntry(value: 9, label: '9'),
-              DropdownMenuEntry(value: 10, label: '10'),
-            ],
-          ),
-        ],
-      ),*/
       actions: [
         liedColor.isEmpty || liedNumber == 0
             ? const TextButton(
-          onPressed: null,
-          child: Text('Válassz színt és számot'),
-        )
+                onPressed: null,
+                child: Text('Válassz színt és számot'),
+              )
             : TextButton(
-          onPressed: () async {
-            liedCard = '$liedColor$liedNumber';
-            print('Lied card: $liedCard');
-            await DatabaseService(lobbyId: widget.lobbyId).updateLies(
-              liedColor,
-              liedNumber,
-              widget.choosedCard,
-            );
-            setState(() {
-              DatabaseService(lobbyId: widget.lobbyId).moveToDiscardPile(
-                widget.choosedCard,
-                widget.user!,
-              );
-            });
-            widget.onButtonPressed();
-            Navigator.pop(context);
-            await DatabaseService(lobbyId: widget.lobbyId)
-                .incresePassCount();
-            await DatabaseService(lobbyId: widget.lobbyId)
-                .checkActivePlayer();
-            await DatabaseService(lobbyId: widget.lobbyId)
-                .updateLastCardPlayer(widget.user!.uid);
-          },
-          child: const Text('OK'),
-        ),
+                onPressed: () async {
+                  liedCard = '$liedColor$liedNumber';
+                  print('Lied card: $liedCard');
+                  await db.updateLies(
+                    liedColor,
+                    liedNumber,
+                    widget.choosedCard,
+                  );
+                  setState(() {
+                    db.moveToDiscardPile(
+                      widget.choosedCard,
+                      widget.user!,
+                    );
+                  });
+                  widget.onButtonPressed();
+                  Navigator.pop(context);
+                  await db.incresePassCount();
+                  await db.checkActivePlayer();
+                  await db.updateLastCardPlayer(widget.user!.uid);
+                },
+                child: const Text('OK'),
+              ),
       ],
     );
   }

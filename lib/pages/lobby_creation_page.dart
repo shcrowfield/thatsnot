@@ -48,6 +48,8 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   int passCount = 0;
   String oppoentId = '';
   String lastCardPlayer = '';
+  String winnerId = '';
+  String answer = '';
 
   @override
   void initState() {
@@ -256,6 +258,8 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
                     passCount,
                     oppoentId,
                     lastCardPlayer,
+                    winnerId,
+                    answer,
                   );
                   _onLobbyDetailsPageNext();
                 },

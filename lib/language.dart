@@ -16,7 +16,10 @@ final Map<String, String> langMapEng = {
   'Players': 'Players',
   'Ready': 'Ready',
   'Allow to Enter': 'Allow to Enter',
-  'LobbyIsFull': 'Lobby is Full'
+  'LobbyIsFull': 'Lobby is Full',
+  'orange': 'orange',
+  'purple': 'purple',
+  'black': 'black',
 };
 
 final Map<String, String> langMapHun = {
@@ -37,7 +40,10 @@ final Map<String, String> langMapHun = {
   'Players': 'Játékosok',
   'Ready': 'Mehet',
   'Allow to Enter': 'Beléphet',
-  'LobbyIsFull': 'A lobbi megtelt'
+  'LobbyIsFull': 'A lobbi megtelt',
+  'orange': 'narancssárga',
+  'purple': 'lila',
+  'black': 'fekete',
 };
 final Map<String, String> langMapTur = {
   'Back': 'Geri',
@@ -73,7 +79,7 @@ Map<String, String> changeLanguageMap() {
     return languageMap = langMapEng;
   } else if (lang == 'Tur') {
     return languageMap = langMapTur;
-  }else {
+  } else {
     return languageMap = langMapHun;
   }
 }
