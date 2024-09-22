@@ -24,7 +24,7 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
   bool isLobbyPressed = false;
 
   _onStartNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 

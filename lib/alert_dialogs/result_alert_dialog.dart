@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/language.dart';
 import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/services/database.dart';
 
@@ -113,7 +114,7 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                    '${data['lastCardPlayerName']} szerint a kártya ${data['liedColor']} ${data['liedNumber']}'),
+                    '${data['lastCardPlayerName']} szerint a kártya ${languageMap[data['liedColor']]} ${data['liedNumber']}'),
                 Text(
                     '${data['opponentName']} szerint hazudott, mert nem ${data['answer']}!'),
                 Text('A párbaj győztese: ${data['winnerName']}'),

@@ -16,7 +16,7 @@ class LeaderboardPage extends StatefulWidget {
 
 class _LeaderboardPageState extends State<LeaderboardPage> {
   _onStartNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 

@@ -92,7 +92,7 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
                       itemCount: wins.length,
                       itemBuilder: (context, index) {
                         return Container(
-                          width: sizes(context)['screenWidth'] * 0.12,
+                          width: sizes(context)['screenWidth'] * 0.13,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white),
                           ),
@@ -116,10 +116,6 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
               height: sizes(context)['screenHeight'] * 0.5,
               width: sizes(context)['screenWidth'] * 0.8,
               child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border.fromBorderSide(BorderSide(color: Colors.black)),
-                ),
                 child: FutureBuilder(
                     future: playerBoardFuture,
                     builder: (context, snapshot) {
@@ -137,6 +133,7 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
                           child: DChartLineN(
                             groupList: [
                               NumericGroup(
+                                color: Colors.blue,
                                 id: 'wins',
                                 data: List.generate(wins.length, (index) {
                                   return NumericData(

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/pages/leaderboard_page.dart';
@@ -16,8 +17,11 @@ class StartPage extends StatefulWidget {
   State<StartPage> createState() => _StartPageState();
 }
 
+User? get user {
+  return FirebaseAuth.instance.currentUser;
+}
+
 class _StartPageState extends State<StartPage> {
-  User? user = FirebaseAuth.instance.currentUser;
   final GoogleAuth _googleAuth = GoogleAuth();
   String nickName = '';
   late TextEditingController nickNameController;
@@ -40,12 +44,12 @@ class _StartPageState extends State<StartPage> {
   }
 
   _onRulesNext() {
-    Navigator.pushReplacement(
+    Navigator.push(
         context, MaterialPageRoute(builder: (context) => const RulesPage()));
   }
 
   _onLobbyNext() {
-    Navigator.pushReplacement(
+    Navigator.push(
         context,
         MaterialPageRoute(
             builder: (context) =>
@@ -53,12 +57,12 @@ class _StartPageState extends State<StartPage> {
   }
 
   _onLobbyListNext() {
-    Navigator.pushReplacement(context,
+    Navigator.push(context,
         MaterialPageRoute(builder: (context) => LobbiesListPage(user: user)));
   }
 
   _onResultsNext() {
-    Navigator.pushReplacement(context,
+    Navigator.push(context,
         MaterialPageRoute(builder: (context) => LeaderboardPage(user: user)));
   }
 
@@ -74,6 +78,13 @@ class _StartPageState extends State<StartPage> {
     return null;
   }
 
+  Future<bool> isOnLeaderboard(User user) async {
+    DocumentSnapshot leaderboards = await FirebaseFirestore.instance
+        .collection('leaderboard')
+        .doc(user.uid)
+        .get();
+    return leaderboards.exists;
+  }
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -123,49 +134,58 @@ class _StartPageState extends State<StartPage> {
                     _googleAuth.buildGoogleSignInOutButton(context, () async {
                       await _googleAuth.signIn();
                       setState(() {});
-                      user = FirebaseAuth.instance.currentUser;
                     }, () async {
                       await _googleAuth.signOut();
-                      setState(() {
-                        user = FirebaseAuth.instance.currentUser;
-                      });
+                      setState(() {});
                     }),
                     Text(getLoginType() ?? '',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: sizes(context)['textSize'])),
-                    ElevatedButton(onPressed: (){
-                      LeaderboardService(anyad).setLeaderboardData('SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 'name', 10);
-                    }, child: Text('set')),
-                    ElevatedButton(onPressed: (){
-                      LeaderboardService(anyad).updateLeaderboardData('SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 50);
-                    }, child: Text('update')),
-                    ElevatedButton(onPressed: (){
-                      LeaderboardService(anyad).newOrExistingUser('uidd', 'name', 10);
-                    }, child: Text('newOrExisting')),
+                    ElevatedButton(
+                        onPressed: () {
+                          LeaderboardService(anyad).setLeaderboardData(
+                              'SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 'name', 10);
+                        },
+                        child: Text('set')),
+                    ElevatedButton(
+                        onPressed: () {
+                          LeaderboardService(anyad).updateLeaderboardData(
+                              'SYRPZAdTHkhGKgzb4OJBTIo6uPP2', -5);
+                        },
+                        child: Text('update')),
+                    ElevatedButton(
+                        onPressed: () {
+                          LeaderboardService(anyad)
+                              .newOrExistingUser('uidd', 'name', 10);
+                        },
+                        child: Text('newOrExisting')),
                   ],
                 ),
                 Column(
                   children: [
                     ElevatedButton(
                       onPressed: () {
-                      getLoginType() != 'Anonymous' ?
-                        _onLobbyNext() : ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Jelenleg csak Google fiókkal tudsz lobbit létrehozni!'),
-                        ),
-                      );
+                        getLoginType() != 'Anonymous'
+                            ? _onLobbyNext()
+                            : ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Jelenleg csak Google fiókkal tudsz lobbit létrehozni!'),
+                                ),
+                              );
                       },
-                      style: getLoginType() != 'Anonymous' ? menuButtonStyle.copyWith(
-                        minimumSize: WidgetStateProperty.all(Size(
-                            sizes(context)['buttonWidth'],
-                            sizes(context)['buttonHeight'])),
-                      ) :
-                      disabledMenuButtonStyle.copyWith(
-                        minimumSize: WidgetStateProperty.all(Size(
-                            sizes(context)['buttonWidth'],
-                            sizes(context)['buttonHeight'])),
-                      ),
+                      style: getLoginType() != 'Anonymous'
+                          ? menuButtonStyle.copyWith(
+                              minimumSize: WidgetStateProperty.all(Size(
+                                  sizes(context)['buttonWidth'],
+                                  sizes(context)['buttonHeight'])),
+                            )
+                          : disabledMenuButtonStyle.copyWith(
+                              minimumSize: WidgetStateProperty.all(Size(
+                                  sizes(context)['buttonWidth'],
+                                  sizes(context)['buttonHeight'])),
+                            ),
                       child: Text(languageMap['CreateLobby'] ?? '',
                           style:
                               TextStyle(fontSize: sizes(context)['textSize'])),
@@ -184,24 +204,30 @@ class _StartPageState extends State<StartPage> {
                     ),
                     SizedBox(height: sizes(context)['screenHeight'] * 0.01),
                     ElevatedButton(
-                      onPressed: () {
-                        getLoginType() != 'Anonymous' ?
-                        _onResultsNext() : ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Jelenleg csak Google fiókkal tudsz eredményeket megtekinteni!'),
-                          ),
-                        );
+                      onPressed: () async {
+                        if (getLoginType() != 'Anonymous' &&
+                            await isOnLeaderboard(user!)) {
+                          _onResultsNext();
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                  'Jelenleg csak Google fiókkal tudsz eredményeket megtekinteni vagy még nincs eredméyned!'),
+                            ),
+                          );
+                        }
                       },
-                      style: getLoginType() != 'Anonymous' ? menuButtonStyle.copyWith(
-                        minimumSize: WidgetStateProperty.all(Size(
-                            sizes(context)['buttonWidth'],
-                            sizes(context)['buttonHeight'])),
-                      ):
-                      disabledMenuButtonStyle.copyWith(
-                        minimumSize: WidgetStateProperty.all(Size(
-                            sizes(context)['buttonWidth'],
-                            sizes(context)['buttonHeight'])),
-                      ),
+                      style: getLoginType() != 'Anonymous'
+                          ? menuButtonStyle.copyWith(
+                              minimumSize: WidgetStateProperty.all(Size(
+                                  sizes(context)['buttonWidth'],
+                                  sizes(context)['buttonHeight'])),
+                            )
+                          : disabledMenuButtonStyle.copyWith(
+                              minimumSize: WidgetStateProperty.all(Size(
+                                  sizes(context)['buttonWidth'],
+                                  sizes(context)['buttonHeight'])),
+                            ),
                       child: Text(languageMap['Results'] ?? ''),
                     ),
                     SizedBox(height: sizes(context)['screenHeight'] * 0.01),
@@ -275,9 +301,7 @@ class _StartPageState extends State<StartPage> {
       onPressed: () async {
         try {
           await FirebaseAuth.instance.signInAnonymously();
-          setState(() {
-            user = FirebaseAuth.instance.currentUser;
-          });
+          setState(() {});
         } on FirebaseAuthException catch (e) {
           print(e);
         }
@@ -297,9 +321,7 @@ class _StartPageState extends State<StartPage> {
         ElevatedButton(
           onPressed: () async {
             await FirebaseAuth.instance.signOut();
-            setState(() {
-              user = FirebaseAuth.instance.currentUser;
-            });
+            setState(() {});
           },
           style: menuButtonStyle.copyWith(
             minimumSize: WidgetStateProperty.all(Size(
@@ -314,9 +336,7 @@ class _StartPageState extends State<StartPage> {
   Future<void> _loginAnonymously() async {
     try {
       await FirebaseAuth.instance.signInAnonymously();
-      setState(() {
-        user = FirebaseAuth.instance.currentUser;
-      });
+      setState(() {});
       print("Signed in with temporary account.");
     } catch (e) {
       print("Failed to sign in anonymously: $e");

@@ -2,20 +2,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/language.dart';
 import 'package:thatsnot/services/database.dart';
 
 class SayAlertDialog extends StatefulWidget {
   final String lobbyId;
   final User? user;
   final MapEntry<String, dynamic> choosedCard;
-  final VoidCallback onButtonPressed;
+ // final VoidCallback onButtonPressed;
 
   const SayAlertDialog({
     super.key,
     required this.lobbyId,
     required this.user,
     required this.choosedCard,
-    required this.onButtonPressed,
+    //required this.onButtonPressed,
   });
 
   @override
@@ -69,9 +70,9 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
 
       if (lobbyLiedColor.isEmpty || lobbyLiedNumber == 9) {
         colorDropdownMenuEntries = [
-          const DropdownMenuEntry(value: 'Purple', label: 'Purple'),
-          const DropdownMenuEntry(value: 'Orange', label: 'Orange'),
-          const DropdownMenuEntry(value: 'Black', label: 'Black'),
+          DropdownMenuEntry(value: 'Purple', label: '${languageMap['Purple']}'),
+          DropdownMenuEntry(value: 'Orange', label: '${languageMap['Orange']}'),
+          DropdownMenuEntry(value: 'Black', label: '${languageMap['Black']}'),
         ];
       } else {
         colorDropdownMenuEntries = [
@@ -164,7 +165,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       widget.user!,
                     );
                   });
-                  widget.onButtonPressed();
+                 // widget.onButtonPressed();
                   Navigator.pop(context);
                   await db.incresePassCount();
                   await db.checkActivePlayer();

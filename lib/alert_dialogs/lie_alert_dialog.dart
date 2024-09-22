@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/result_alert_dialog.dart';
+import 'package:thatsnot/language.dart';
 import 'package:thatsnot/services/database.dart';
 
 class LieAlertDialog extends StatefulWidget {
@@ -25,7 +26,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
   bool answerPressed = false;
   late DatabaseService db;
   late Map<String, dynamic> _lobby;
-  late Future <Map<String, dynamic>> _lobbyDataFuture;
+  late Future<Map<String, dynamic>> _lobbyDataFuture;
 
   @override
   void initState() {
@@ -52,21 +53,13 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
   }
 
   void _onResultNext() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
+    showDialog(
+        barrierDismissible: false,
+        context: context,
         builder: (context) => ResultAlertDialog(
-          lobbyId: widget.lobbyId,
-        ),
-      ),
-    );
-  }
-
-  Future<Map<String, dynamic>> _getChoosedCard() async {
-    var firstEntry = _lobby['choosedCard'].entries.first;
-    String color = firstEntry.value['color'];
-    int number = firstEntry.value['number'];
-    return {'color': color, 'number': number};
+              lobbyId: widget.lobbyId,
+            ));
+    /* Navigator.pop(context);*/
   }
 
   @override
@@ -112,7 +105,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                         await db.checkActivePlayer();
                         _onResultNext();
                       },
-                      child: Text('Nem ${_lobby['liedColor']}'),
+                      child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
                     ),
                     ElevatedButton(
                       onPressed: () async {
@@ -140,17 +133,11 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                     ),
                   ],
                 ),
-                Text(answerPressed
-                    ? 'A bemondott lap: ${_lobby['liedColor']} ${_lobby['liedNumber']}'
-                    : 'A bemondott lap: '),
-                Text(answerPressed
-                    ? 'A valós lap:' /*${_getChoosedCard()} ${_getChoosedCard()}'*/
-                    : 'A valós lap: '),
-                Text(answerPressed ? 'A nyertes:' : 'A nyertes: '),
                 ElevatedButton(
-                  onPressed: widget.onButtonPressed,
-                  child: const Text('OK'),
-                ),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('OK'))
               ],
             );
           }

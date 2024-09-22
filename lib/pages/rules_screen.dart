@@ -10,7 +10,7 @@ class RulesPage extends StatefulWidget {
 
 class _RulesPageState extends State<RulesPage> {
   _onRulesNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 

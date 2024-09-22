@@ -1,14 +1,15 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/lie_alert_dialog.dart';
 import 'package:thatsnot/alert_dialogs/say_alert_dialog.dart';
 import 'package:thatsnot/button_style.dart';
-import 'package:thatsnot/countdown.dart';
 import 'package:thatsnot/language.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
-import 'package:timer_count_down/timer_controller.dart';
 import '../lobby_manager.dart';
 
 class GamePage extends StatefulWidget {
@@ -22,10 +23,13 @@ class GamePage extends StatefulWidget {
 }
 
 class _GamePageState extends State<GamePage> {
-  final CountdownController _controller = CountdownController(autoStart: false);
   late Stream<Map<String, dynamic>?> _getCardsStream;
   late Stream<DocumentSnapshot> _snapshotStream;
+  late Future<int> _passCountFuture;
   late DatabaseService db;
+  StreamSubscription<DocumentSnapshot>? _choosedCardSubscription;
+  Timer? t;
+  int _remainingSeconds = 10;
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -43,6 +47,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   MapEntry<String, dynamic> choosedCard = const MapEntry('', '');
+  Map<String, dynamic> previousChoosedCard = {};
 
   @override
   initState() {
@@ -53,12 +58,64 @@ class _GamePageState extends State<GamePage> {
         .doc(widget.lobbyId)
         .snapshots()
         .asBroadcastStream();
+    _passCountFuture = getPassCount();
     db = DatabaseService(lobbyId: widget.lobbyId);
+    _setupChoosedCardSubscription();
+  }
+
+  bool _areKeysEqual(Set<String> keys1, Set<String> keys2) {
+    if (keys1.length != keys2.length) return false;
+    return keys1.every((key) => keys2.contains(key));
+  }
+
+  Future<void> _setupChoosedCardSubscription() async {
+    _choosedCardSubscription = FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(widget.lobbyId)
+        .snapshots()
+        .listen((snapshot) async {
+      if (snapshot.exists) {
+        Map<String, dynamic> choosedCard = snapshot.get('choosedCard');
+        int passCount = snapshot.get('passCount');
+        String opponentId = snapshot.get('opponentId') ?? '';
+        String activePlayer = snapshot.get('activePlayer');
+        int playerLimit = snapshot.get('playerLimit');
+
+        t?.cancel();
+        if (choosedCard.isNotEmpty) {
+          previousChoosedCard = Map<String, dynamic>.from(choosedCard);
+
+          if (!_areKeysEqual(
+              choosedCard.keys.toSet(), previousChoosedCard.keys.toSet())) {
+            setState(() {
+              _remainingSeconds = 10;
+            });
+            t = Timer.periodic(const Duration(seconds: 1), (timer) async {
+              setState(() {
+                _remainingSeconds--;
+              });
+            });
+            if (passCount >= playerLimit ||
+                opponentId.isNotEmpty ||
+                _remainingSeconds <= 0) {
+              t?.cancel();
+              t = null;
+              if (_remainingSeconds <= 0 && activePlayer == widget.user?.uid) {
+                await db.setPassCount();
+                await db.checkActivePlayer();
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   @override
   dispose() {
     super.dispose();
+    _choosedCardSubscription?.cancel();
+    t?.cancel();
   }
 
   _getLobbyData() async {
@@ -71,7 +128,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   bool compareColor(String choosedColor, String liedColor) {
-    return choosedColor == liedColor || choosedColor == 'Color 1-9';
+    return choosedColor == liedColor || choosedColor == 'Color Joker';
   }
 
   bool compareNumber(int choosedNumber, int liedNumber) {
@@ -79,8 +136,13 @@ class _GamePageState extends State<GamePage> {
   }
 
   onStartNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
+  }
+
+  Future<int> getPassCount() async {
+    var lobby = await _getLobbyData();
+    return lobby['passCount'];
   }
 
   Stream<Map<String, dynamic>?> getCards(String uid) async* {
@@ -145,6 +207,7 @@ class _GamePageState extends State<GamePage> {
         bool numberMatch =
             compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
         showDialog(
+            barrierDismissible: false,
             context: context,
             builder: (context) => LieAlertDialog(
                 lobbyId: widget.lobbyId,
@@ -245,12 +308,6 @@ class _GamePageState extends State<GamePage> {
                 child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                //const Spacer(),
-                /*CountDown(controller: _controller),
-                    ElevatedButton(
-                        onPressed: () => _controller.start(),
-                        child: const Text('start')),*/
-
                 StreamBuilder(
                   stream: _snapshotStream,
                   builder: (context, snapshot) {
@@ -280,7 +337,7 @@ class _GamePageState extends State<GamePage> {
                                             Text(
                                               'Soron lévő játékos: ${activePlayerSnapshot.data}',
                                               style: const TextStyle(
-                                                fontSize: 20,
+                                                fontSize: 10,
                                               ),
                                             ),
                                           ],
@@ -290,13 +347,15 @@ class _GamePageState extends State<GamePage> {
                                       }
                                     },
                                   ),
-                                  Text( liedNumber == '0'
-                                      ? 'Bemondott: $liedColor'
-                                      : 'Bemondott: $liedColor $liedNumber ${languageMap[liedColor] }',
+                                  Text(
+                                    liedNumber == '0'
+                                        ? 'Bemondott: '
+                                        : 'Bemondott: ${languageMap[liedColor]} $liedNumber',
                                     style: const TextStyle(
-                                      fontSize: 20,
+                                      fontSize: 10,
                                     ),
                                   ),
+                                  Text('$_remainingSeconds'),
                                 ],
                               ),
                             ),
@@ -400,7 +459,7 @@ class _GamePageState extends State<GamePage> {
                                                       lobbyId: widget.lobbyId,
                                                       user: widget.user,
                                                       choosedCard: choosedCard,
-                                                      onButtonPressed: reBuild,
+                                                      //onButtonPressed: reBuild,
                                                     ));
                                             reBuild();
                                           }
@@ -434,12 +493,14 @@ class _GamePageState extends State<GamePage> {
                       Column(
                         children: [
                           ElevatedButton(
-                              onPressed: () async {
-                                await db.incresePassCount();
-                                await db.checkActivePlayer();
-                                reBuild();
-                              },
-                              child: const Text('PASSZ'), style: sideButtonStyle,),
+                            onPressed: () async {
+                              await db.incresePassCount();
+                              await db.checkActivePlayer();
+                              reBuild();
+                            },
+                            style: sideButtonStyle,
+                            child: const Text('PASSZ'),
+                          ),
                         ],
                       ),
                     ],

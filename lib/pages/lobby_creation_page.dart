@@ -70,7 +70,7 @@ class _LobbyCreationPageState extends State<LobbyCreationPage> {
   }
 
   _onStartNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 
