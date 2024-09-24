@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/result_alert_dialog.dart';
+import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/language.dart';
 import 'package:thatsnot/services/database.dart';
 
@@ -35,6 +36,34 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
     _lobbyDataFuture = _getLobby();
   }
 
+  void _handleButtonPress(bool isColorButton) async {
+    final winningPlayer = isColorButton
+        ? (widget.colorMatch ? _lobby['lastCardPlayer'] : _lobby['opponentId'])
+        : (widget.numberMatch
+            ? _lobby['lastCardPlayer']
+            : _lobby['opponentId']);
+    final losingPlayer = winningPlayer == _lobby['lastCardPlayer']
+        ? _lobby['opponentId']
+        : _lobby['lastCardPlayer'];
+    final liedAttribute =
+        isColorButton ? _lobby['liedColor'] : _lobby['liedNumber'].toString();
+
+    await db.updateResult(winningPlayer, liedAttribute);
+    await db.increseWinnerPoints(winningPlayer);
+    await db.isHandEmpty(winningPlayer);
+    await db.drawForLoser(losingPlayer);
+
+    setState(() {
+      answerPressed = true;
+    });
+
+    await db.incresePassCount();
+    await db.checkActivePlayer();
+
+    widget.onButtonPressed(); // Close the current dialog
+    _onResultNext(); // Show the ResultAlertDialog
+  }
+
   Future<Map<String, dynamic>> _getLobby() async {
     try {
       final lobbyResult = (await FirebaseFirestore.instance
@@ -59,7 +88,6 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
         builder: (context) => ResultAlertDialog(
               lobbyId: widget.lobbyId,
             ));
-    /* Navigator.pop(context);*/
   }
 
   @override
@@ -76,7 +104,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
           } else if (!snapshot.hasData) {
             return const Text('No data found');
           } else {
-            final data = snapshot.data;
+            // final data = snapshot.data;
             return Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -84,7 +112,11 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     ElevatedButton(
-                      onPressed: () async {
+                      onPressed: () =>
+                          answerPressed ? null : _handleButtonPress(true),
+                      style: answerPressed ? disabledGameButtonStyle : gameButtonStyle,
+                      child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
+                      /*async {
                         if (widget.colorMatch) {
                           await db.updateResult(
                               _lobby['lastCardPlayer'], _lobby['liedColor']);
@@ -103,12 +135,15 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                         });
                         await db.incresePassCount();
                         await db.checkActivePlayer();
+                        Navigator.pop(context);
                         _onResultNext();
                       },
                       child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
+                    */
                     ),
                     ElevatedButton(
-                      onPressed: () async {
+                      onPressed:
+                          () /*async {
                         if (widget.numberMatch) {
                           await db.updateResult(_lobby['lastCardPlayer'],
                               _lobby['liedNumber'].toString());
@@ -127,17 +162,26 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                         });
                         await db.incresePassCount();
                         await db.checkActivePlayer();
+                        Navigator.pop(context);
                         _onResultNext();
                       },
+                      child: Text('Nem ${_lobby['liedNumber'].toString()}'),
+                    ),*/
+                              =>
+                              answerPressed ? null : _handleButtonPress(false),
+                      style: answerPressed
+                          ? disabledGameButtonStyle
+                          : gameButtonStyle,
                       child: Text('Nem ${_lobby['liedNumber'].toString()}'),
                     ),
                   ],
                 ),
                 ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('OK'))
+                    onPressed: () =>  answerPressed ? Navigator.pop(context) : null,
+                    style: answerPressed
+                        ? gameButtonStyle
+                        : disabledGameButtonStyle,
+                    child: const Text('Ok')),
               ],
             );
           }

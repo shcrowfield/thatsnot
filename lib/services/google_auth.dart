@@ -32,10 +32,10 @@ class GoogleAuth {
   Future<void> signIn() async {
     try {
       final GoogleSignInAccount? googleSignInAccount =
-          await _googleSignIn.signIn();
+      await _googleSignIn.signIn();
       if (googleSignInAccount != null) {
         final GoogleSignInAuthentication googleSignInAuthentication =
-            await googleSignInAccount.authentication;
+        await googleSignInAccount.authentication;
         final AuthCredential credential = GoogleAuthProvider.credential(
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
@@ -45,7 +45,7 @@ class GoogleAuth {
         if (user != null && user!.isAnonymous) {
           try {
             final UserCredential userCredential =
-                await user!.linkWithCredential(credential);
+            await user!.linkWithCredential(credential);
             user = userCredential.user;
             print('Anonymous user linked to Google account');
           } catch (e) {
@@ -61,7 +61,7 @@ class GoogleAuth {
           }
         } else {
           final UserCredential authResult =
-              await _auth.signInWithCredential(credential);
+          await _auth.signInWithCredential(credential);
           user = authResult.user;
         }
       }

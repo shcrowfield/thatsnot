@@ -116,7 +116,7 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
                 Text(
                     '${data['lastCardPlayerName']} szerint a kártya ${languageMap[data['liedColor']]} ${data['liedNumber']}'),
                 Text(
-                    '${data['opponentName']} szerint hazudott, mert nem ${data['answer']}!'),
+                    '${data['opponentName']} szerint hazudott, mert nem ${languageMap[data['answer']]}!'),
                 Text('A párbaj győztese: ${data['winnerName']}'),
               ],
             );

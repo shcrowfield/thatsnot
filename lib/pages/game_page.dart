@@ -1,16 +1,17 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/alert_dialogs/end_alert_dialog.dart';
 import 'package:thatsnot/alert_dialogs/lie_alert_dialog.dart';
+import 'package:thatsnot/alert_dialogs/result_alert_dialog.dart';
 import 'package:thatsnot/alert_dialogs/say_alert_dialog.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/language.dart';
+import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
-import '../lobby_manager.dart';
+
 
 class GamePage extends StatefulWidget {
   final String lobbyId;
@@ -25,9 +26,14 @@ class GamePage extends StatefulWidget {
 class _GamePageState extends State<GamePage> {
   late Stream<Map<String, dynamic>?> _getCardsStream;
   late Stream<DocumentSnapshot> _snapshotStream;
-  late Future<int> _passCountFuture;
   late DatabaseService db;
   StreamSubscription<DocumentSnapshot>? _choosedCardSubscription;
+  StreamSubscription<DocumentSnapshot>? _lobbySubscription;
+  bool _isResultDialogShowing = false;
+  bool _isEndDialogShowing = false;
+  bool _isGameStarted = false;
+  bool _hasPassedThisTurn = false;
+  String _currentActivePlayer = '';
   Timer? t;
   int _remainingSeconds = 10;
 
@@ -58,9 +64,84 @@ class _GamePageState extends State<GamePage> {
         .doc(widget.lobbyId)
         .snapshots()
         .asBroadcastStream();
-    _passCountFuture = getPassCount();
     db = DatabaseService(lobbyId: widget.lobbyId);
     _setupChoosedCardSubscription();
+    _setupLobbySubscription();
+  }
+
+  _canPass(){
+    return _currentActivePlayer == widget.user?.uid && !_hasPassedThisTurn;
+  }
+
+  void _setupLobbySubscription() {
+    _lobbySubscription = FirebaseFirestore.instance
+        .collection('lobbies')
+        .doc(widget.lobbyId)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        String newActivePlayer = snapshot.get('activePlayer');
+        if(newActivePlayer != _currentActivePlayer){
+          setState(() {
+            _currentActivePlayer = newActivePlayer;
+            _hasPassedThisTurn = false;
+          });
+        }
+        String answer = snapshot.get('answer');
+        var drawPile = snapshot.get('drawPile');
+
+        if (answer != '' && !_isResultDialogShowing) {
+          _showResultDialog();
+        }
+
+        if (!_isGameStarted && drawPile != null && drawPile.isNotEmpty) {
+          _isGameStarted = true;
+        }
+        if (_isGameStarted && drawPile != null) {
+          Future.delayed(const Duration(seconds: 2), (){
+            if(drawPile.isEmpty && !_isEndDialogShowing){
+              _showEndAlertDialog();
+            }
+          });
+        }
+      }
+    });
+  }
+
+  void _showResultDialog() {
+    if (!_isResultDialogShowing) {
+      setState(() {
+        _isResultDialogShowing = true;
+      });
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => ResultAlertDialog(
+          lobbyId: widget.lobbyId,
+        ),
+      ).then((_) {
+        setState(() {
+          _isResultDialogShowing = false;
+        });
+      });
+    }
+  }
+
+  void _showEndAlertDialog() {
+    setState(() {
+      _isEndDialogShowing = true;
+    });
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => EndAlertDialog(
+        lobbyId: widget.lobbyId,
+      ),
+    ).then((_) {
+      setState(() {
+        _isEndDialogShowing = false;
+      });
+    });
   }
 
   bool _areKeysEqual(Set<String> keys1, Set<String> keys2) {
@@ -116,6 +197,7 @@ class _GamePageState extends State<GamePage> {
     super.dispose();
     _choosedCardSubscription?.cancel();
     t?.cancel();
+    _lobbySubscription?.cancel();
   }
 
   _getLobbyData() async {
@@ -136,13 +218,8 @@ class _GamePageState extends State<GamePage> {
   }
 
   onStartNext() {
-    Navigator.pop(
+    Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
-  }
-
-  Future<int> getPassCount() async {
-    var lobby = await _getLobbyData();
-    return lobby['passCount'];
   }
 
   Stream<Map<String, dynamic>?> getCards(String uid) async* {
@@ -194,26 +271,32 @@ class _GamePageState extends State<GamePage> {
         return true;
       });
       if (!result) {
-        showDialog(
-            context: context,
-            builder: (context) => const AlertDialog(
-                  title: Text('Már valaki más mond'),
-                ));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Már más mondott haugot.'),
+          ),
+        );
       } else {
         Map<String, dynamic> choosedCard = lobbyDoc.get('choosedCard');
         String choosedColor = choosedCard.values.first['color'];
         bool colorMatch = compareColor(choosedColor, lobbyDoc.get('liedColor'));
         int choosedNumber = choosedCard.values.first['number'];
-        bool numberMatch =
-            compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
+        bool numberMatch = compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
+
         showDialog(
-            barrierDismissible: false,
-            context: context,
-            builder: (context) => LieAlertDialog(
-                lobbyId: widget.lobbyId,
-                colorMatch: colorMatch,
-                numberMatch: numberMatch,
-                onButtonPressed: reBuild));
+          barrierDismissible: false,
+          context: context,
+          builder: (BuildContext dialogContext) => LieAlertDialog(
+            lobbyId: widget.lobbyId,
+            colorMatch: colorMatch,
+            numberMatch: numberMatch,
+            onButtonPressed: () {
+              Navigator.of(dialogContext).pop(); // This will close the LieAlertDialog
+            },
+          ),
+        );
       }
     } catch (e) {
       print('Error: $e');
@@ -234,19 +317,14 @@ class _GamePageState extends State<GamePage> {
   }
 
   Stream getPlayerPoints(String uid) async* {
-    await for (var snapshot
-        in LobbyManager.getPlayersListStream(widget.lobbyId)) {
+    await for (var snapshot in LobbyManager.getPlayersListStream(widget.lobbyId)) {
       List<Map<String, dynamic>> players = snapshot['players'];
-      for (int i = 0; i < players.length; i++) {
-        if (players[i]['uid'] == uid) {
-          yield players[i]['points'];
-        }
-      }
+      Map<String, dynamic>? player = players.firstWhere(
+            (player) => player['uid'] == uid,
+        orElse: () => <String, dynamic> {},
+      );
+      yield player['points'] ?? 0;
     }
-  }
-
-  void reBuild() {
-    setState(() {});
   }
 
   late Stream<Map<String, dynamic>?> cardsStream;
@@ -355,7 +433,7 @@ class _GamePageState extends State<GamePage> {
                                       fontSize: 10,
                                     ),
                                   ),
-                                  Text('$_remainingSeconds'),
+                                  //Text('$_remainingSeconds'),
                                 ],
                               ),
                             ),
@@ -390,9 +468,9 @@ class _GamePageState extends State<GamePage> {
                     children: [
                       Column(
                         children: [
-                          ElevatedButton(
+                         /* ElevatedButton(
                               onPressed: reBuild,
-                              child: const Icon(Icons.refresh)),
+                              child: const Icon(Icons.refresh)),*/
                           ElevatedButton(
                             onPressed: () async {
                               await lieButtonIsActive(widget.user!.uid)
@@ -404,7 +482,7 @@ class _GamePageState extends State<GamePage> {
                                       ),
                                     );
                             },
-                            //style: sideButtonStyle,
+                            style: sideButtonStyle,
                             child: const Text('LIE'),
                           ),
                         ],
@@ -461,7 +539,7 @@ class _GamePageState extends State<GamePage> {
                                                       choosedCard: choosedCard,
                                                       //onButtonPressed: reBuild,
                                                     ));
-                                            reBuild();
+                                           // reBuild();
                                           }
                                         },
                                         //child: Card(
@@ -493,11 +571,16 @@ class _GamePageState extends State<GamePage> {
                       Column(
                         children: [
                           ElevatedButton(
-                            onPressed: () async {
-                              await db.incresePassCount();
-                              await db.checkActivePlayer();
-                              reBuild();
-                            },
+                            onPressed: _canPass()
+                                ? null
+                                : () async {
+                              setState(() {
+                                _hasPassedThisTurn = true;
+                              });
+                                    await db.incresePassCount();
+                                    await db.checkActivePlayer();
+
+                                  },
                             style: sideButtonStyle,
                             child: const Text('PASSZ'),
                           ),

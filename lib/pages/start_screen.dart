@@ -142,7 +142,7 @@ class _StartPageState extends State<StartPage> {
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: sizes(context)['textSize'])),
-                    ElevatedButton(
+                   /* ElevatedButton(
                         onPressed: () {
                           LeaderboardService(anyad).setLeaderboardData(
                               'SYRPZAdTHkhGKgzb4OJBTIo6uPP2', 'name', 10);
@@ -159,7 +159,7 @@ class _StartPageState extends State<StartPage> {
                           LeaderboardService(anyad)
                               .newOrExistingUser('uidd', 'name', 10);
                         },
-                        child: Text('newOrExisting')),
+                        child: Text('newOrExisting')),*/
                   ],
                 ),
                 Column(

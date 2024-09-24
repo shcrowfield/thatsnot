@@ -31,6 +31,11 @@ final ButtonStyle gameButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white,
   foregroundColor: Colors.purple,
 );
+final ButtonStyle disabledGameButtonStyle = ElevatedButton.styleFrom(
+  backgroundColor: Colors.white38,
+  foregroundColor: Colors.black,
+);
+
 final ButtonStyle diabledGameButtonStyle = ElevatedButton.styleFrom(
   backgroundColor: Colors.white38,
   foregroundColor: Colors.black,
@@ -40,4 +45,12 @@ final ButtonStyle sideButtonStyle = ElevatedButton.styleFrom(
     borderRadius: BorderRadius.circular(15.0),
   ),
   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
+);
+final ButtonStyle disabledSideButtonStyle = ElevatedButton.styleFrom(
+  shape: RoundedRectangleBorder(
+    borderRadius: BorderRadius.circular(15.0),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 60),
+  backgroundColor: Colors.white38,
+  foregroundColor: Colors.black,
 );

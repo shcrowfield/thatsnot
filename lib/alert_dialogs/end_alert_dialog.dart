@@ -1,7 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/lobby_manager.dart';
-
-import '../pages/start_screen.dart';
+import 'package:thatsnot/pages/start_screen.dart';
 
 class EndAlertDialog extends StatefulWidget {
   final String lobbyId;
@@ -19,6 +19,11 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
   void initState() {
     super.initState();
     _playersFuture = getPlayersListByPoints();
+  }
+
+  Future<int>  currentPlayerCount() async {
+    var returnMap = await LobbyManager.getPlayersList(widget.lobbyId);
+    return returnMap['currentPlayerCount'];
   }
 
   Future<List<Map<String, dynamic>>> getPlayersListByPoints() async {
@@ -63,7 +68,7 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
                         var player = players[index];
                         return ListTile(
                           title: Text(player['name']),
-                          trailing: Text('${player['points']} points'),
+                          trailing: Text('${player['points']} pont'),
                         );
                       },
                     ),
@@ -77,9 +82,10 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
       actions: [
         TextButton(
           onPressed: () {
+            LobbyManager.checkPlayerMap(widget.lobbyId, FirebaseAuth.instance.currentUser, currentPlayerCount);
             onStartNext();
           },
-          child: const Text('OK'),
+          child: const Text('Vissza a Főmenübe'),
         ),
       ],
     );
