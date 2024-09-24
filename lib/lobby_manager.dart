@@ -1,12 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-
 import 'language.dart';
 
 class LobbyManager {
   static Future<Map<String, dynamic>> getPlayersList(lobbyId) async {
- return getPlayersListStream(lobbyId).first;
-
+    return getPlayersListStream(lobbyId).first;
   }
 
   static Stream<Map<String, dynamic>> getPlayersListStream(lobbyId) async* {
@@ -14,12 +12,29 @@ class LobbyManager {
         .collection('lobbies')
         .doc(lobbyId)
         .snapshots()) {
+      if (!snapshot.exists) {
+        Map<String, dynamic> returnMap = {
+          'players': [],
+          'documentSnapshot': snapshot
+        };
+        yield returnMap;
+        continue;
+      }
       Map<String, dynamic>? data = snapshot.data();
-      Map<String, dynamic> player1 = data?['player1'];
-      Map<String, dynamic> player2 = data?['player2'];
-      Map<String, dynamic> player3 = data?['player3'];
-      Map<String, dynamic> player4 = data?['player4'];
-      List<Map<String, dynamic>> players = [player1, player2, player3, player4];
+      if (data == null) {
+        Map<String, dynamic> returnMap = {
+          'players': [],
+          'documentSnapshot': snapshot
+        };
+        yield returnMap;
+        continue;
+      }
+
+      List<Map<String, dynamic>> players = [];
+      for (int i = 1; i <= 4; i++) {
+        Map<String, dynamic> player = data['player$i'];
+        players.add(player);
+      }
       Map<String, dynamic> returnMap = {
         'players': players,
         'documentSnapshot': snapshot
@@ -51,7 +66,6 @@ class LobbyManager {
     if (currentPlayerCount != null && currentPlayerCount! > 0) {
       await documentSnapshot.reference.update({
         'currentPlayerCount': FieldValue.increment(-1),
-        //'isReady': FieldValue.increment(-1)
       });
     }
     LobbyManager.deletePlayer(lobbyId);
@@ -86,14 +100,13 @@ class LobbyManager {
     }
   }
 
-  static String allowToJoin(int currentPlayerCount, int playerLimit,
-      String nickName) {
+  static String allowToJoin(
+      int currentPlayerCount, int playerLimit, String nickName) {
     if (currentPlayerCount < playerLimit && nickName.isNotEmpty) {
       return languageMap['Allow to Enter'] ?? "";
-    }
-    else if(currentPlayerCount < playerLimit && nickName.isEmpty) {
+    } else if (currentPlayerCount < playerLimit && nickName.isEmpty) {
       return languageMap['EnterNickname'] ?? "";
-    }else {
+    } else {
       return languageMap['LobbyIsFull'] ?? "";
     }
   }

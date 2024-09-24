@@ -293,7 +293,7 @@ class _GamePageState extends State<GamePage> {
             colorMatch: colorMatch,
             numberMatch: numberMatch,
             onButtonPressed: () {
-              Navigator.of(dialogContext).pop(); // This will close the LieAlertDialog
+              Navigator.of(dialogContext).pop();
             },
           ),
         );
@@ -318,7 +318,8 @@ class _GamePageState extends State<GamePage> {
 
   Stream getPlayerPoints(String uid) async* {
     await for (var snapshot in LobbyManager.getPlayersListStream(widget.lobbyId)) {
-      List<Map<String, dynamic>> players = snapshot['players'];
+      List<dynamic> dynamicPlayers = snapshot['players'];
+      List<Map<String, dynamic>> players = dynamicPlayers.map((player) => player as Map<String, dynamic>).toList();
       Map<String, dynamic>? player = players.firstWhere(
             (player) => player['uid'] == uid,
         orElse: () => <String, dynamic> {},

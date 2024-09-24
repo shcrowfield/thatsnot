@@ -8,7 +8,7 @@ import 'package:thatsnot/services/google_auth.dart';
 import 'package:thatsnot/pages/lobby_creation_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
 import 'package:thatsnot/language.dart';
-import 'package:thatsnot/services/leaderboard.dart';
+//import 'package:thatsnot/services/leaderboard.dart';
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});

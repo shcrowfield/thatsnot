@@ -60,8 +60,8 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
     await db.incresePassCount();
     await db.checkActivePlayer();
 
-    widget.onButtonPressed(); // Close the current dialog
-    _onResultNext(); // Show the ResultAlertDialog
+    widget.onButtonPressed();
+    _onResultNext();
   }
 
   Future<Map<String, dynamic>> _getLobby() async {
@@ -76,7 +76,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
       }
       _lobby = lobbyResult;
     } catch (e) {
-      print('Anyád: $e');
+      print('Error: $e');
     }
     return _lobby;
   }
@@ -114,61 +114,14 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                     ElevatedButton(
                       onPressed: () =>
                           answerPressed ? null : _handleButtonPress(true),
-                      style: answerPressed ? disabledGameButtonStyle : gameButtonStyle,
+                      style: answerPressed
+                          ? disabledGameButtonStyle
+                          : gameButtonStyle,
                       child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
-                      /*async {
-                        if (widget.colorMatch) {
-                          await db.updateResult(
-                              _lobby['lastCardPlayer'], _lobby['liedColor']);
-                          await db
-                              .increseWinnerPoints(_lobby['lastCardPlayer']);
-                          await db.isHandEmpty(_lobby['lastCardPlayer']);
-                          await db.drawForLoser(_lobby['opponentId']);
-                        } else {
-                          await db.updateResult(
-                              _lobby['opponentId'], _lobby['liedColor']);
-                          await db.increseWinnerPoints(_lobby['opponentId']);
-                          await db.drawForLoser(_lobby['lastCardPlayer']);
-                        }
-                        setState(() {
-                          answerPressed = true;
-                        });
-                        await db.incresePassCount();
-                        await db.checkActivePlayer();
-                        Navigator.pop(context);
-                        _onResultNext();
-                      },
-                      child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
-                    */
                     ),
                     ElevatedButton(
-                      onPressed:
-                          () /*async {
-                        if (widget.numberMatch) {
-                          await db.updateResult(_lobby['lastCardPlayer'],
-                              _lobby['liedNumber'].toString());
-                          await db
-                              .increseWinnerPoints(_lobby['lastCardPlayer']);
-                          await db.isHandEmpty(_lobby['lastCardPlayer']);
-                          await db.drawForLoser(_lobby['opponentId']);
-                        } else {
-                          await db.updateResult(_lobby['opponentId'],
-                              _lobby['liedNumber'].toString());
-                          await db.increseWinnerPoints(_lobby['opponentId']);
-                          await db.drawForLoser(_lobby['lastCardPlayer']);
-                        }
-                        setState(() {
-                          answerPressed = true;
-                        });
-                        await db.incresePassCount();
-                        await db.checkActivePlayer();
-                        Navigator.pop(context);
-                        _onResultNext();
-                      },
-                      child: Text('Nem ${_lobby['liedNumber'].toString()}'),
-                    ),*/
-                              =>
-                              answerPressed ? null : _handleButtonPress(false),
+                      onPressed: () =>
+                          answerPressed ? null : _handleButtonPress(false),
                       style: answerPressed
                           ? disabledGameButtonStyle
                           : gameButtonStyle,
@@ -177,7 +130,8 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                   ],
                 ),
                 ElevatedButton(
-                    onPressed: () =>  answerPressed ? Navigator.pop(context) : null,
+                    onPressed: () =>
+                        answerPressed ? Navigator.pop(context) : null,
                     style: answerPressed
                         ? gameButtonStyle
                         : disabledGameButtonStyle,
