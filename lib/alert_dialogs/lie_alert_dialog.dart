@@ -61,7 +61,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
     await db.checkActivePlayer();
 
     widget.onButtonPressed();
-    _onResultNext();
+    //_onResultNext();
   }
 
   Future<Map<String, dynamic>> _getLobby() async {

@@ -110,9 +110,8 @@ class _GamePageState extends State<GamePage> {
 
   void _showResultDialog() {
     if (!_isResultDialogShowing) {
-      setState(() {
         _isResultDialogShowing = true;
-      });
+
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -120,9 +119,7 @@ class _GamePageState extends State<GamePage> {
           lobbyId: widget.lobbyId,
         ),
       ).then((_) {
-        setState(() {
           _isResultDialogShowing = false;
-        });
       });
     }
   }
@@ -163,31 +160,19 @@ class _GamePageState extends State<GamePage> {
         int playerLimit = snapshot.get('playerLimit');
 
         t?.cancel();
-        if (choosedCard.isNotEmpty) {
-          previousChoosedCard = Map<String, dynamic>.from(choosedCard);
-
-          if (!_areKeysEqual(
-              choosedCard.keys.toSet(), previousChoosedCard.keys.toSet())) {
+        if(choosedCard.isEmpty){
+          setState(() {
+            _remainingSeconds = 10;
+          });
+          t = Timer.periodic(const Duration(seconds: 1), (timer) async {
             setState(() {
-              _remainingSeconds = 10;
+              _remainingSeconds--;
             });
-            t = Timer.periodic(const Duration(seconds: 1), (timer) async {
-              setState(() {
-                _remainingSeconds--;
-              });
-            });
-            if (passCount >= playerLimit ||
-                opponentId.isNotEmpty ||
-                _remainingSeconds <= 0) {
-              t?.cancel();
-              t = null;
-              if (_remainingSeconds <= 0 && activePlayer == widget.user?.uid) {
-                await db.setPassCount();
-                await db.checkActivePlayer();
-              }
-            }
-          }
+          });
+          t?.cancel();
+          t = null;
         }
+
       }
     });
   }
