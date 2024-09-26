@@ -148,10 +148,10 @@ class _GamePageState extends State<GamePage> {
         .listen((snapshot) async {
       if (snapshot.exists) {
         Map<String, dynamic> choosedCard = snapshot.get('choosedCard');
-        int passCount = snapshot.get('passCount');
-        String opponentId = snapshot.get('opponentId') ?? '';
+       // int passCount = snapshot.get('passCount');
+       // String opponentId = snapshot.get('opponentId') ?? '';
         String activePlayer = snapshot.get('activePlayer');
-        int playerLimit = snapshot.get('playerLimit');
+       // int playerLimit = snapshot.get('playerLimit');
         Map<String, dynamic> drawPile = snapshot.get('drawPile');
 
         t?.cancel();

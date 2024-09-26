@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:thatsnot/alert_dialogs/result_alert_dialog.dart';
 import 'package:thatsnot/button_style.dart';
 import 'package:thatsnot/language.dart';
 import 'package:thatsnot/services/database.dart';
