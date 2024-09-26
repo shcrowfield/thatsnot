@@ -9,14 +9,13 @@ class LieAlertDialog extends StatefulWidget {
   final String lobbyId;
   final bool colorMatch;
   final bool numberMatch;
-  final VoidCallback onButtonPressed;
+
 
   const LieAlertDialog({
     super.key,
     required this.lobbyId,
     required this.colorMatch,
     required this.numberMatch,
-    required this.onButtonPressed,
   });
 
   @override
@@ -48,20 +47,15 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
     final liedAttribute =
         isColorButton ? _lobby['liedColor'] : _lobby['liedNumber'].toString();
 
+    Navigator.pop(context);
     await db.updateResult(winningPlayer, liedAttribute);
     await db.increseWinnerPoints(winningPlayer);
     await db.isHandEmpty(winningPlayer);
     await db.drawForLoser(losingPlayer);
 
-    setState(() {
-      answerPressed = true;
-    });
-
     await db.incresePassCount();
     await db.checkActivePlayer();
 
-    widget.onButtonPressed();
-    //_onResultNext();
   }
 
   Future<Map<String, dynamic>> _getLobby() async {
@@ -79,15 +73,6 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
       print('Error: $e');
     }
     return _lobby;
-  }
-
-  void _onResultNext() {
-    showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => ResultAlertDialog(
-              lobbyId: widget.lobbyId,
-            ));
   }
 
   @override
@@ -129,13 +114,6 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                     ),
                   ],
                 ),
-                ElevatedButton(
-                    onPressed: () =>
-                        answerPressed ? Navigator.pop(context) : null,
-                    style: answerPressed
-                        ? gameButtonStyle
-                        : disabledGameButtonStyle,
-                    child: const Text('Ok')),
               ],
             );
           }

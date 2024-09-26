@@ -131,7 +131,7 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
                                       .updatePlayer(player,
                                           document['currentPlayerCount']);
 
-                                  Navigator.push(
+                                  Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => LobbyDetailsPage(

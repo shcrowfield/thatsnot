@@ -421,6 +421,18 @@ class DatabaseService {
       'passCount': currentPlayerCount,
     });
   }
+  Future<void> decreaseActivePlayerPoint() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+    for (int i = 0; i < players.length; i++) {
+      if (players[i]['uid'] == uid) {
+        return await lobbyCollection.doc(lobbyId).update({
+          'player${i + 1}.points': FieldValue.increment(-2),
+        });
+      }
+    }
+  }
 
   Future<void> checkActivePlayer() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);

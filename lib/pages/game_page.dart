@@ -12,7 +12,6 @@ import 'package:thatsnot/pages/start_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:thatsnot/services/database.dart';
 
-
 class GamePage extends StatefulWidget {
   final String lobbyId;
   final User? user;
@@ -69,7 +68,7 @@ class _GamePageState extends State<GamePage> {
     _setupLobbySubscription();
   }
 
-  _canPass(){
+  _canPass() {
     return _currentActivePlayer == widget.user?.uid && !_hasPassedThisTurn;
   }
 
@@ -81,7 +80,7 @@ class _GamePageState extends State<GamePage> {
         .listen((snapshot) {
       if (snapshot.exists) {
         String newActivePlayer = snapshot.get('activePlayer');
-        if(newActivePlayer != _currentActivePlayer){
+        if (newActivePlayer != _currentActivePlayer) {
           setState(() {
             _currentActivePlayer = newActivePlayer;
             _hasPassedThisTurn = false;
@@ -98,8 +97,8 @@ class _GamePageState extends State<GamePage> {
           _isGameStarted = true;
         }
         if (_isGameStarted && drawPile != null) {
-          Future.delayed(const Duration(seconds: 2), (){
-            if(drawPile.isEmpty && !_isEndDialogShowing){
+          Future.delayed(const Duration(seconds: 2), () {
+            if (drawPile.isEmpty && !_isEndDialogShowing) {
               _showEndAlertDialog();
             }
           });
@@ -110,7 +109,7 @@ class _GamePageState extends State<GamePage> {
 
   void _showResultDialog() {
     if (!_isResultDialogShowing) {
-        _isResultDialogShowing = true;
+      _isResultDialogShowing = true;
 
       showDialog(
         context: context,
@@ -119,7 +118,7 @@ class _GamePageState extends State<GamePage> {
           lobbyId: widget.lobbyId,
         ),
       ).then((_) {
-          _isResultDialogShowing = false;
+        _isResultDialogShowing = false;
       });
     }
   }
@@ -141,11 +140,6 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
-  bool _areKeysEqual(Set<String> keys1, Set<String> keys2) {
-    if (keys1.length != keys2.length) return false;
-    return keys1.every((key) => keys2.contains(key));
-  }
-
   Future<void> _setupChoosedCardSubscription() async {
     _choosedCardSubscription = FirebaseFirestore.instance
         .collection('lobbies')
@@ -158,20 +152,33 @@ class _GamePageState extends State<GamePage> {
         String opponentId = snapshot.get('opponentId') ?? '';
         String activePlayer = snapshot.get('activePlayer');
         int playerLimit = snapshot.get('playerLimit');
+        Map<String, dynamic> drawPile = snapshot.get('drawPile');
 
         t?.cancel();
-        if(choosedCard.isEmpty){
+        if (drawPile.isEmpty) return;
           setState(() {
-            _remainingSeconds = 10;
+            _remainingSeconds = 15;
           });
           t = Timer.periodic(const Duration(seconds: 1), (timer) async {
             setState(() {
               _remainingSeconds--;
             });
+            if(_remainingSeconds <= 0){
+              t?.cancel();
+              t = null;
+              Navigator.popUntil(context, (route) => route.settings.name == '/game');
+              if(activePlayer == widget.user?.uid) {
+                if (choosedCard.isEmpty){
+                  await db.decreaseActivePlayerPoint();
+                }
+                await db.setPassCount();
+                await db.checkActivePlayer();
+              }
+
+            }
+
           });
-          t?.cancel();
-          t = null;
-        }
+
 
       }
     });
@@ -203,7 +210,7 @@ class _GamePageState extends State<GamePage> {
   }
 
   onStartNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context, MaterialPageRoute(builder: (context) => const StartPage()));
   }
 
@@ -256,11 +263,9 @@ class _GamePageState extends State<GamePage> {
         return true;
       });
       if (!result) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                'Már más mondott haugot.'),
+            content: Text('Már más mondott haugot.'),
           ),
         );
       } else {
@@ -268,7 +273,8 @@ class _GamePageState extends State<GamePage> {
         String choosedColor = choosedCard.values.first['color'];
         bool colorMatch = compareColor(choosedColor, lobbyDoc.get('liedColor'));
         int choosedNumber = choosedCard.values.first['number'];
-        bool numberMatch = compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
+        bool numberMatch =
+            compareNumber(choosedNumber, lobbyDoc.get('liedNumber'));
 
         showDialog(
           barrierDismissible: false,
@@ -277,9 +283,7 @@ class _GamePageState extends State<GamePage> {
             lobbyId: widget.lobbyId,
             colorMatch: colorMatch,
             numberMatch: numberMatch,
-            onButtonPressed: () {
-              Navigator.of(dialogContext).pop();
-            },
+
           ),
         );
       }
@@ -302,12 +306,15 @@ class _GamePageState extends State<GamePage> {
   }
 
   Stream getPlayerPoints(String uid) async* {
-    await for (var snapshot in LobbyManager.getPlayersListStream(widget.lobbyId)) {
+    await for (var snapshot
+        in LobbyManager.getPlayersListStream(widget.lobbyId)) {
       List<dynamic> dynamicPlayers = snapshot['players'];
-      List<Map<String, dynamic>> players = dynamicPlayers.map((player) => player as Map<String, dynamic>).toList();
+      List<Map<String, dynamic>> players = dynamicPlayers
+          .map((player) => player as Map<String, dynamic>)
+          .toList();
       Map<String, dynamic>? player = players.firstWhere(
-            (player) => player['uid'] == uid,
-        orElse: () => <String, dynamic> {},
+        (player) => player['uid'] == uid,
+        orElse: () => <String, dynamic>{},
       );
       yield player['points'] ?? 0;
     }
@@ -419,7 +426,7 @@ class _GamePageState extends State<GamePage> {
                                       fontSize: 10,
                                     ),
                                   ),
-                                  //Text('$_remainingSeconds'),
+                                  Text('$_remainingSeconds'),
                                 ],
                               ),
                             ),
@@ -454,7 +461,7 @@ class _GamePageState extends State<GamePage> {
                     children: [
                       Column(
                         children: [
-                         /* ElevatedButton(
+                          /* ElevatedButton(
                               onPressed: reBuild,
                               child: const Icon(Icons.refresh)),*/
                           ElevatedButton(
@@ -524,8 +531,10 @@ class _GamePageState extends State<GamePage> {
                                                       user: widget.user,
                                                       choosedCard: choosedCard,
                                                       //onButtonPressed: reBuild,
-                                                    ));
-                                           // reBuild();
+                                                    ),
+                                                routeSettings: const RouteSettings(
+                                                    name: 'SayAlertDialog'));
+                                            // reBuild();
                                           }
                                         },
                                         //child: Card(
@@ -560,12 +569,11 @@ class _GamePageState extends State<GamePage> {
                             onPressed: _canPass()
                                 ? null
                                 : () async {
-                              setState(() {
-                                _hasPassedThisTurn = true;
-                              });
+                                    setState(() {
+                                      _hasPassedThisTurn = true;
+                                    });
                                     await db.incresePassCount();
                                     await db.checkActivePlayer();
-
                                   },
                             style: sideButtonStyle,
                             child: const Text('PASSZ'),

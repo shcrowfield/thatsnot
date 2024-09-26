@@ -52,6 +52,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
       Navigator.pushReplacement(
           context,
           MaterialPageRoute(
+            settings: const RouteSettings(name: '/game'),
               builder: (context) =>
                   GamePage(lobbyId: widget.lobbyId, user: widget.user)));
       print('Navigated to game page');
