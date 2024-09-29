@@ -9,14 +9,12 @@ class SayAlertDialog extends StatefulWidget {
   final String lobbyId;
   final User? user;
   final MapEntry<String, dynamic> choosedCard;
- // final VoidCallback onButtonPressed;
 
   const SayAlertDialog({
     super.key,
     required this.lobbyId,
     required this.user,
     required this.choosedCard,
-    //required this.onButtonPressed,
   });
 
   @override
@@ -76,7 +74,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
         ];
       } else {
         colorDropdownMenuEntries = [
-          DropdownMenuEntry(value: lobbyLiedColor, label: lobbyLiedColor),
+          DropdownMenuEntry(value: lobbyLiedColor, label: '${languageMap[lobbyLiedColor]}'),
         ];
       }
 
@@ -110,7 +108,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Milyen kártya ez?'),
+      title: Text(languageMap['WhatKindOfCard'] ?? ''),
       content: FutureBuilder<void>(
         future: _dropdownEntriesFuture,
         builder: (context, snapshot) {
@@ -146,9 +144,9 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
       ),
       actions: [
         liedColor.isEmpty || liedNumber == 0
-            ? const TextButton(
+            ? TextButton(
                 onPressed: null,
-                child: Text('Válassz színt és számot'),
+                child: Text(languageMap['ChooseColorAndNumber'] ?? ''),
               )
             : TextButton(
                 onPressed: () async {

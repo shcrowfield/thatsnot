@@ -8,7 +8,7 @@ import 'package:thatsnot/services/google_auth.dart';
 import 'package:thatsnot/pages/lobby_creation_page.dart';
 import 'package:thatsnot/pages/lobby_list_page.dart';
 import 'package:thatsnot/language.dart';
-//import 'package:thatsnot/services/leaderboard.dart';
+
 
 class StartPage extends StatefulWidget {
   const StartPage({super.key});
@@ -26,7 +26,7 @@ class _StartPageState extends State<StartPage> {
   String nickName = '';
   late TextEditingController nickNameController;
   String dropdownValue = 'Hun';
-  Map<String, dynamic> anyad = {};
+  //Map<String, dynamic> anyad = {};
 
   @override
   initState() {
@@ -70,7 +70,7 @@ class _StartPageState extends State<StartPage> {
     if (user != null) {
       for (var userInfo in user!.providerData) {
         if (userInfo.providerId == 'google.com') {
-          return 'Google: ${userInfo.displayName}';
+          return '${userInfo.displayName}';
         }
       }
       return 'Anonymous';
@@ -138,7 +138,7 @@ class _StartPageState extends State<StartPage> {
                       await _googleAuth.signOut();
                       setState(() {});
                     }),
-                    Text(getLoginType() ?? '',
+                    Text(languageMap['${getLoginType()}'] ?? '${getLoginType()}',
                         style: TextStyle(
                             color: Colors.white,
                             fontSize: sizes(context)['textSize'])),
@@ -169,9 +169,9 @@ class _StartPageState extends State<StartPage> {
                         getLoginType() != 'Anonymous'
                             ? _onLobbyNext()
                             : ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
+                          SnackBar(
                                   content: Text(
-                                      'Jelenleg csak Google fiókkal tudsz lobbit létrehozni!'),
+                                      languageMap['JustGoogleForLobby'] ?? ''),
                                 ),
                               );
                       },
@@ -210,9 +210,9 @@ class _StartPageState extends State<StartPage> {
                           _onResultsNext();
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
+                            SnackBar(
                               content: Text(
-                                  'Jelenleg csak Google fiókkal tudsz eredményeket megtekinteni vagy még nincs eredméyned!'),
+                                  languageMap['JustGoogleForResults'] ?? ''),
                             ),
                           );
                         }
@@ -231,7 +231,7 @@ class _StartPageState extends State<StartPage> {
                       child: Text(languageMap['Results'] ?? ''),
                     ),
                     SizedBox(height: sizes(context)['screenHeight'] * 0.01),
-                    user == null ? buildSignInButton() : buildSignOutButton(),
+                    //user == null ? buildSignInButton() : buildSignOutButton(),
                   ],
                 ),
                 Column(

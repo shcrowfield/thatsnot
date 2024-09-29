@@ -77,7 +77,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Miben hazudott?'),
+      title: Text(languageMap['WhatIsTheLie'] ??''),
       content: FutureBuilder<Map<String, dynamic>>(
         future: _lobbyDataFuture,
         builder: (context, snapshot) {
@@ -101,7 +101,18 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                       style: answerPressed
                           ? disabledGameButtonStyle
                           : gameButtonStyle,
-                      child: Text('Nem ${languageMap[_lobby['liedColor']]}'),
+                      child: Row(
+                        children: [
+                          Text('${languageMap['Not']} '),
+                          Text('${languageMap[_lobby['liedColor']]}', style: TextStyle(
+                            color: _lobby['liedColor'] == 'Orange'
+                                ? Colors.orange
+                                : _lobby['liedColor'] == 'Purple'
+                                ? Colors.purple
+                                : Colors.black,
+                          ),),
+                        ],
+                      ),
                     ),
                     ElevatedButton(
                       onPressed: () =>
@@ -109,7 +120,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                       style: answerPressed
                           ? disabledGameButtonStyle
                           : gameButtonStyle,
-                      child: Text('Nem ${_lobby['liedNumber'].toString()}'),
+                      child: Text('${languageMap['Not']} ${_lobby['liedNumber'].toString()}'),
                     ),
                   ],
                 ),

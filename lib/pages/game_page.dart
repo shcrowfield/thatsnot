@@ -148,38 +148,33 @@ class _GamePageState extends State<GamePage> {
         .listen((snapshot) async {
       if (snapshot.exists) {
         Map<String, dynamic> choosedCard = snapshot.get('choosedCard');
-       // int passCount = snapshot.get('passCount');
-       // String opponentId = snapshot.get('opponentId') ?? '';
         String activePlayer = snapshot.get('activePlayer');
-       // int playerLimit = snapshot.get('playerLimit');
         Map<String, dynamic> drawPile = snapshot.get('drawPile');
 
         t?.cancel();
         if (drawPile.isEmpty) return;
+        setState(() {
+          _remainingSeconds = 15;
+        });
+        t = Timer.periodic(const Duration(seconds: 1), (timer) async {
           setState(() {
-            _remainingSeconds = 15;
+            _remainingSeconds--;
           });
-          t = Timer.periodic(const Duration(seconds: 1), (timer) async {
-            setState(() {
-              _remainingSeconds--;
-            });
-            if(_remainingSeconds <= 0){
-              t?.cancel();
-              t = null;
-              Navigator.popUntil(context, (route) => route.settings.name == '/game');
-              if(activePlayer == widget.user?.uid) {
-                if (choosedCard.isEmpty){
-                  await db.decreaseActivePlayerPoint();
-                }
-                await db.setPassCount();
-                await db.checkActivePlayer();
+          if (_remainingSeconds <= 0) {
+            t?.cancel();
+            t = null;
+            Navigator.popUntil(
+                context, (route) => route.settings.name == '/game');
+            if (activePlayer == widget.user?.uid) {
+              if (choosedCard.isEmpty) {
+                await db.decreaseActivePlayerPoint();
               }
-
+              await db.restoreOpponentId();
+              await db.setPassCount();
+              await db.checkActivePlayer();
             }
-
-          });
-
-
+          }
+        });
       }
     });
   }
@@ -232,9 +227,11 @@ class _GamePageState extends State<GamePage> {
   Future<bool> lieButtonIsActive(String uid) async {
     var lobby = await _getLobbyData();
     String activePlayer = lobby['activePlayer'];
+    String lastCardPlayer = lobby['lastCardPlayer'];
     bool isThereFirstCard = lobby['choosedCard'].isNotEmpty;
     bool isPlayerTurn = activePlayer == uid;
-    if (isThereFirstCard && !isPlayerTurn) {
+    bool isLastCardPlayer = lastCardPlayer == uid;
+    if (isThereFirstCard && !isPlayerTurn && !isLastCardPlayer) {
       return true;
     } else {
       return false;
@@ -264,8 +261,8 @@ class _GamePageState extends State<GamePage> {
       });
       if (!result) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Már más mondott haugot.'),
+          SnackBar(
+            content: Text(languageMap['AnotherSaidLie'] ?? ''),
           ),
         );
       } else {
@@ -283,7 +280,6 @@ class _GamePageState extends State<GamePage> {
             lobbyId: widget.lobbyId,
             colorMatch: colorMatch,
             numberMatch: numberMatch,
-
           ),
         );
       }
@@ -346,7 +342,7 @@ class _GamePageState extends State<GamePage> {
                       builder: (context, pointSnapshot) {
                         if (pointSnapshot.hasData) {
                           return Text(
-                            'Pontjaid: ${pointSnapshot.data}',
+                            '${languageMap['YourPoints']}: ${pointSnapshot.data}',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -365,8 +361,8 @@ class _GamePageState extends State<GamePage> {
                       LobbyManager.decresePlayerLimit(widget.lobbyId);
                       onStartNext();
                     },
-                    label:
-                        const Text('Kilépés', style: TextStyle(fontSize: 20)),
+                    label: Text(languageMap['Exit'] ?? '',
+                        style: TextStyle(fontSize: 20)),
                     icon: const Icon(Icons.arrow_forward),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white,
@@ -406,7 +402,7 @@ class _GamePageState extends State<GamePage> {
                                         return Column(
                                           children: [
                                             Text(
-                                              'Soron lévő játékos: ${activePlayerSnapshot.data}',
+                                              '${languageMap['Player'] ?? ''}: ${activePlayerSnapshot.data}',
                                               style: const TextStyle(
                                                 fontSize: 10,
                                               ),
@@ -414,15 +410,21 @@ class _GamePageState extends State<GamePage> {
                                           ],
                                         );
                                       } else {
-                                        return const Text('Loading...');
+                                        return Text(
+                                            languageMap['Loading'] ?? '');
                                       }
                                     },
                                   ),
                                   Text(
                                     liedNumber == '0'
-                                        ? 'Bemondott: '
-                                        : 'Bemondott: ${languageMap[liedColor]} $liedNumber',
-                                    style: const TextStyle(
+                                        ? ''
+                                        : '${languageMap[liedColor]} $liedNumber',
+                                    style: TextStyle(
+                                      color: liedColor == 'Orange'
+                                          ? Colors.orange
+                                          : liedColor == 'Purple'
+                                              ? Colors.purple
+                                              : Colors.black,
                                       fontSize: 10,
                                     ),
                                   ),
@@ -434,7 +436,7 @@ class _GamePageState extends State<GamePage> {
                         ),
                       );
                     } else {
-                      return const Text('Loading...');
+                      return Text(languageMap['Loading'] ?? '');
                     }
                   },
                 ),
@@ -446,133 +448,131 @@ class _GamePageState extends State<GamePage> {
                 color: Colors.transparent,
                 child: Center(
                     child: Row(
-                      children: [
-                            ElevatedButton(
-                              onPressed: () async {
-                                await lieButtonIsActive(widget.user!.uid)
-                                    ? lieButton()
-                                    : ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Te vagy az aktív játékos vagy nincs kártya az asztalon'),
-                                        ),
-                                      );
-                              },
-                              style: sideButtonStyle,
-                              child: const Text('LIE'),
-                            ),
-
-                        Expanded(
-                          child: StreamBuilder<Map<String, dynamic>?>(
-                            stream: _getCardsStream,
-                            key: const Key('cards'),
-                            builder: (context, snapshot) {
-                              ('snapshot: $snapshot');
-                              if (snapshot.connectionState ==
-                                  ConnectionState.waiting) {
-                                return const CircularProgressIndicator();
-                              } else if (snapshot.hasError) {
-                                return Text('Error: ${snapshot.error}');
-                              } else if (snapshot.hasData) {
-                                Map<String, dynamic> userCards = snapshot.data!;
-                                List<MapEntry<String, dynamic>> cardList =
-                                    userCards.entries.toList();
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 30),
-                                  child: ListView.builder(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: cardList.length,
-                                    itemBuilder: (context, index) {
-                                      return SizedBox(
-                                        width: sizes(context)['cardWidth'],
-                                        height: sizes(context)['cardHeight'],
-                                        child: InkWell(
-                                          onTap: () async {
-                                            final lobbyData =
-                                                await _getLobbyData();
-                                            final bool isNotAllowed =
-                                                lobbyData['lastCardPlayer'] ==
-                                                        widget.user!.uid ||
-                                                    lobbyData['activePlayer'] !=
-                                                        widget.user!.uid;
-                                            if (isNotAllowed) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                      'Már tettél le lapot vagy nem te vagy soron'),
-                                                ),
-                                              );
-                                            } else {
-                                              choosedCard = cardList[index];
-                                              showDialog(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      SayAlertDialog(
-                                                        lobbyId: widget.lobbyId,
-                                                        user: widget.user,
-                                                        choosedCard: choosedCard,
-                                                        //onButtonPressed: reBuild,
-                                                      ),
-                                                  routeSettings: const RouteSettings(
-                                                      name: 'SayAlertDialog'));
-                                              // reBuild();
-                                            }
-                                          },
-                                          //child: Card(
-                                          //color: Colors.black,
-                                          child: Center(
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: Image.asset(
-                                                '${cardList[index].value['image']}',
-                                                /*width: sizes(context)['screenWidth'] *
-                                                      0.13,*/
-                                                height: sizes(
-                                                        context)['screenHeight'] *
-                                                    0.29,
-                                              ),
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        await lieButtonIsActive(widget.user!.uid)
+                            ? lieButton()
+                            : ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      languageMap['NotAllowToSayLie'] ?? ''),
+                                ),
+                              );
+                      },
+                      style: sideButtonStyle,
+                      child: Text(languageMap['LIE'] ?? ''),
+                    ),
+                    Expanded(
+                      child: StreamBuilder<Map<String, dynamic>?>(
+                        stream: _getCardsStream,
+                        key: const Key('cards'),
+                        builder: (context, snapshot) {
+                          ('snapshot: $snapshot');
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return const CircularProgressIndicator();
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (snapshot.hasData) {
+                            Map<String, dynamic> userCards = snapshot.data!;
+                            List<MapEntry<String, dynamic>> cardList =
+                                userCards.entries.toList();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 30),
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: cardList.length,
+                                itemBuilder: (context, index) {
+                                  return SizedBox(
+                                    width: sizes(context)['cardWidth'],
+                                    height: sizes(context)['cardHeight'],
+                                    child: InkWell(
+                                      onTap: () async {
+                                        final lobbyData = await _getLobbyData();
+                                        final bool isNotAllowed =
+                                            lobbyData['lastCardPlayer'] ==
+                                                    widget.user!.uid ||
+                                                lobbyData['activePlayer'] !=
+                                                    widget.user!.uid;
+                                        if (isNotAllowed) {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(languageMap[
+                                                      'YouHaveAlreadyChoosedACard'] ??
+                                                  ''),
                                             ),
+                                          );
+                                        } else {
+                                          choosedCard = cardList[index];
+                                          showDialog(
+                                              context: context,
+                                              builder: (context) =>
+                                                  SayAlertDialog(
+                                                    lobbyId: widget.lobbyId,
+                                                    user: widget.user,
+                                                    choosedCard: choosedCard,
+                                                    //onButtonPressed: reBuild,
+                                                  ),
+                                              routeSettings:
+                                                  const RouteSettings(
+                                                      name: 'SayAlertDialog'));
+                                          // reBuild();
+                                        }
+                                      },
+                                      //child: Card(
+                                      //color: Colors.black,
+                                      child: Center(
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Image.asset(
+                                            '${cardList[index].value['image']}',
+                                            /*width: sizes(context)['screenWidth'] *
+                                                      0.13,*/
+                                            height:
+                                                sizes(context)['screenHeight'] *
+                                                    0.29,
                                           ),
-                                          //),
                                         ),
-                                      );
-                                    },
-                                  ),
-                                );
-                              }
-                              return const Text('Üres a kezed');
-                            },
-                          ),
-                        ),
-
-                        Padding(
-                          padding: const EdgeInsets.only(right: 20),
-                          child: InkWell(
-                                onTap: () async {
-                                  await db.drawCard(widget.user!.uid);
+                                      ),
+                                      //),
+                                    ),
+                                  );
                                 },
-                                child: Image.asset(
-                                  'assets/images/draw.png',
-                                  height: sizes(context)['screenHeight'] * 0.15,
-                                )),
-                        ),
-
-                            ElevatedButton(
-                              onPressed: _canPass()
-                                  ? null
-                                  : () async {
-                                      setState(() {
-                                        _hasPassedThisTurn = true;
-                                      });
-                                      await db.incresePassCount();
-                                      await db.checkActivePlayer();
-                                    },
-                              style: sideButtonStyle,
-                              child: const Text('PASSZ'),
-                            ),
-                      ],
-                    )),
+                              ),
+                            );
+                          }
+                          return Text(languageMap['YourHandIsEmpty'] ?? '');
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: InkWell(
+                          onTap: () async {
+                            await db.drawCard(widget.user!.uid);
+                          },
+                          child: Image.asset(
+                            'assets/images/draw.png',
+                            height: sizes(context)['screenHeight'] * 0.15,
+                          )),
+                    ),
+                    ElevatedButton(
+                      onPressed: _canPass()
+                          ? null
+                          : () async {
+                              setState(() {
+                                _hasPassedThisTurn = true;
+                              });
+                              await db.incresePassCount();
+                              await db.checkActivePlayer();
+                            },
+                      style: sideButtonStyle,
+                      child: Text(languageMap['PASS'] ?? ''),
+                    ),
+                  ],
+                )),
               ),
             ),
           ],

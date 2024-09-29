@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:thatsnot/language.dart';
 import 'package:thatsnot/lobby_manager.dart';
 import 'package:thatsnot/pages/start_screen.dart';
 
@@ -41,7 +42,7 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Game Over'),
+      title: Text(languageMap['GameOver']?? ''),
       content: SizedBox(
         width: 300,
         child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -58,7 +59,7 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
               return Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('The game is over. The list is:'),
+                  Text(languageMap['TopList']?? ''),
                   const SizedBox(height: 10),
                   Flexible(
                     child: ListView.builder(
@@ -68,7 +69,7 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
                         var player = players[index];
                         return ListTile(
                           title: Text(player['name']),
-                          trailing: Text('${player['points']} pont'),
+                          trailing: Text('${player['points']} ${languageMap['Points']?? ''}'),
                         );
                       },
                     ),
@@ -85,7 +86,7 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
             LobbyManager.checkPlayerMap(widget.lobbyId, FirebaseAuth.instance.currentUser, currentPlayerCount);
             onStartNext();
           },
-          child: const Text('Vissza a Főmenübe'),
+          child: Text(languageMap['BackToMainMenu']?? ''),
         ),
       ],
     );

@@ -39,7 +39,7 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
   }
 
   _onLeaderboardNext() {
-    Navigator.pushReplacement(
+    Navigator.pop(
         context,
         MaterialPageRoute(
             builder: (context) => LeaderboardPage(user: widget.user)));
@@ -67,12 +67,13 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
         ),
       ),
       child: Column(children: [
+        const SizedBox(height: 10),
         ElevatedButton(
             onPressed: _onLeaderboardNext,
             child: Text(languageMap['Back'] ?? '',
                 style: const TextStyle(color: Colors.black))),
-        const Text('My Leaderboard',
-            style: TextStyle(fontSize: 30, color: Colors.white)),
+        Text(languageMap['MyLeaderboard'] ?? '',
+            style: const TextStyle(fontSize: 30, color: Colors.white)),
         SizedBox(
           height: sizes(context)['screenHeight'] * 0.2,
           child: FutureBuilder(
@@ -92,16 +93,16 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
                       itemCount: wins.length,
                       itemBuilder: (context, index) {
                         return Container(
-                          width: sizes(context)['screenWidth'] * 0.13,
+                          width: sizes(context)['screenWidth'] * 0.15,
                           decoration: BoxDecoration(
                             border: Border.all(color: Colors.white),
                           ),
                           // Adjust width as needed
                           margin: const EdgeInsets.symmetric(horizontal: 1),
                           child: ListTile(
-                            title: Text('${index + 1}. játék',
+                            title: Text('${index + 1}. ${languageMap['Game'] ?? ''}',
                                 style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('Points: ${wins[index]}',
+                            subtitle: Text('${wins[index]} ${languageMap['Points'] ?? ''}',
                                 style: const TextStyle(color: Colors.white)),
                           ),
                         );
@@ -115,39 +116,37 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
           child: SizedBox(
               height: sizes(context)['screenHeight'] * 0.5,
               width: sizes(context)['screenWidth'] * 0.8,
-              child: Container(
-                child: FutureBuilder(
-                    future: playerBoardFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return const Text('Error loading data');
-                      } else if (!snapshot.hasData) {
-                        return const Text('No data found');
-                      } else {
-                        final data = snapshot.data;
-                        final wins = data?['wins'] ?? [];
-                        return AspectRatio(
-                          aspectRatio: 20 / 5,
-                          child: DChartLineN(
-                            groupList: [
-                              NumericGroup(
-                                color: Colors.blue,
-                                id: 'wins',
-                                data: List.generate(wins.length, (index) {
-                                  return NumericData(
-                                    domain: index+1,
-                                    measure: wins[index]  is num ? wins[index] : 0,
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-                    }),
-              )),
+              child: FutureBuilder(
+                  future: playerBoardFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return const Text('Error loading data');
+                    } else if (!snapshot.hasData) {
+                      return const Text('No data found');
+                    } else {
+                      final data = snapshot.data;
+                      final wins = data?['wins'] ?? [];
+                      return AspectRatio(
+                        aspectRatio: 20 / 5,
+                        child: DChartLineN(
+                          groupList: [
+                            NumericGroup(
+                              color: Colors.blue,
+                              id: 'wins',
+                              data: List.generate(wins.length, (index) {
+                                return NumericData(
+                                  domain: index+1,
+                                  measure: wins[index]  is num ? wins[index] : 0,
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                  })),
         ),
       ]),
     ));

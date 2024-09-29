@@ -196,8 +196,8 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                                   child: Text('Error: ${snapshot.error}'));
                             } else if (!snapshot.hasData ||
                                 snapshot.data!.isEmpty) {
-                              return const Center(
-                                  child: Text('No players found'));
+                              return Center(
+                                  child: Text(languageMap['NoPlayersFound'] ?? ''));
                             } else {
                               List<String> playerNames = snapshot.data!;
                               return SingleChildScrollView(
@@ -247,7 +247,6 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
                                 });
                                 isReadyTransaction();
                               }
-                              //_isReadyCounter();
                             },
                             style: isPressed
                                 ? choosedButtonStyle.copyWith(

@@ -21,7 +21,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
   }
 
   _onMyLeaderboardNext() {
-    Navigator.pushReplacement(
+    Navigator.push(
         context, MaterialPageRoute(builder: (context) => MyLeaderboardPage(user: widget.user!)));
   }
 
@@ -73,6 +73,7 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 20),
             ElevatedButton(
                 onPressed: _onStartNext,
                 child: Text(languageMap['Back'] ?? '',
@@ -91,9 +92,9 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
                     var leaderboard = snapshot.data!;
                     return Column(
                       children: [
-                        const Text('Leaderboard',
+                        Text(languageMap['Leaderboard'] ?? '',
                             style:
-                            TextStyle(fontSize: 30, color: Colors.white)),
+                            const TextStyle(fontSize: 30, color: Colors.white)),
                         FutureBuilder(
                           future: getPlayerData(),
                           builder: (context, snapshot) {
@@ -168,9 +169,9 @@ Widget customListTile(
           children: [
             Text(name,
                 style: const TextStyle(fontSize: 20, color: Colors.white)),
-            Text('Összes eddigi pont: $points',
+            Text('${languageMap['AllPoints']}: $points',
                 style: const TextStyle(fontSize: 20, color: Colors.white)),
-            Text('Összes eddigi nyert meccs: $winCounter',
+            Text('${languageMap['NumberOfWins']}: $winCounter',
                 style: const TextStyle(fontSize: 20, color: Colors.white)),
           ],
         ),
@@ -194,9 +195,9 @@ Widget myListTile(String name, int points, int wins, BuildContext context) {
           children: [
             Text(name,
                 style: const TextStyle(fontSize: 20, color: Colors.black)),
-            Text('Összes eddigi pont: $points',
+            Text('${languageMap['AllPoints']}: $points',
                 style: const TextStyle(fontSize: 20, color: Colors.black)),
-            Text('Összes eddigi nyert meccs: $wins',
+            Text('${languageMap['NumberOfWins']}: $wins',
                 style: const TextStyle(fontSize: 20, color: Colors.black)),
           ],
         ),

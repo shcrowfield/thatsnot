@@ -75,7 +75,8 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
       for (var player in players) {
         if (player['uid'] == winnerId) winnerName = player['name'];
         if (player['uid'] == opponentId) opponentName = player['name'];
-        if (player['uid'] == lastCardPlayer) lastCardPlayerName = player['name'];
+        if (player['uid'] == lastCardPlayer)
+          lastCardPlayerName = player['name'];
       }
 
       print("Data processing complete");
@@ -97,7 +98,7 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Párbaj eredménye'),
+      title: Text(languageMap['DuelResult'] ?? ''),
       content: FutureBuilder<Map<String, String>>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -113,11 +114,41 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                    '${data['lastCardPlayerName']} szerint a kártya ${languageMap[data['liedColor']]} ${data['liedNumber']}'),
-                Text(
-                    '${data['opponentName']} szerint hazudott, mert nem ${languageMap[data['answer']]}!'),
-                Text('A párbaj győztese: ${data['winnerName']}'),
+                Row(
+                  children: [
+                    Text('${data['lastCardPlayerName']} : '),
+                    Text(
+                      '${languageMap[data['liedColor']]} ${data['liedNumber']}',
+                      style: TextStyle(
+                        color: data['liedColor'] == 'Orange'
+                            ? Colors.orange
+                            : data['liedColor'] == 'Purple'
+                                ? Colors.purple
+                                : Colors.black,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text(
+                        '${data['opponentName']} : ${languageMap['LieBecause']} ${languageMap['Not']}'),
+                    Text(
+                      ' ${languageMap[data['answer']]}',
+                      style: TextStyle(
+                        color: data['liedColor'] == 'Orange'
+                            ? Colors.orange
+                            : data['liedColor'] == 'Purple'
+                                ? Colors.purple
+                                : Colors.black,
+                        fontSize: 20,
+                      ),
+                    ),
+                    Text('!')
+                  ],
+                ),
+                Text('${languageMap['TheWinnerIs']}: ${data['winnerName']}'),
               ],
             );
           }

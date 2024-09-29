@@ -283,6 +283,12 @@ class DatabaseService {
     });
   }
 
+  Future<void> restoreOpponentId() async {
+    return await lobbyCollection.doc(lobbyId).update({
+      'opponentId': '',
+    });
+  }
+
   Future<void> updateLastCardPlayer(String lastCardPlayer) async {
     return await lobbyCollection.doc(lobbyId).update({
       'lastCardPlayer': lastCardPlayer,
