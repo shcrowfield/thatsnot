@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:thatsnot/alert_dialogs/end_alert_dialog.dart';
@@ -35,6 +36,14 @@ class _GamePageState extends State<GamePage> {
   String _currentActivePlayer = '';
   Timer? t;
   int _remainingSeconds = 10;
+  String _currentBg = 'assets/images/bg.png';
+  late Timer _bgTimer;
+  bool _isGifShowing = false;
+  final List<String> _bgGifs = [
+    'assets/images/left_gif.gif',
+    'assets/images/right_gif.gif',
+    'assets/images/two_gif.gif',
+  ];
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -66,6 +75,25 @@ class _GamePageState extends State<GamePage> {
     db = DatabaseService(lobbyId: widget.lobbyId);
     _setupChoosedCardSubscription();
     _setupLobbySubscription();
+    _startBackgroundChange();
+  }
+
+  void _startBackgroundChange() {
+    _bgTimer = Timer.periodic(const Duration(seconds: 8), (timer) {
+      if (!_isGifShowing) {
+        String randomGif = _bgGifs[Random().nextInt(_bgGifs.length)];
+        setState(() {
+          _currentBg = randomGif;
+          _isGifShowing = true;
+        });
+        Timer(const Duration(seconds: 1), () {
+          setState(() {
+            _currentBg = 'assets/images/bg.png';
+            _isGifShowing = false;
+          });
+        });
+      }
+    });
   }
 
   _canPass() {
@@ -185,6 +213,7 @@ class _GamePageState extends State<GamePage> {
     _choosedCardSubscription?.cancel();
     t?.cancel();
     _lobbySubscription?.cancel();
+    _bgTimer.cancel();
   }
 
   _getLobbyData() async {
@@ -320,14 +349,18 @@ class _GamePageState extends State<GamePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/bg.png'),
-          fit: BoxFit.cover,
+    return Stack(children: [
+      Container(
+          key: ValueKey<String>(_currentBg),
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(_currentBg),
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
-      ),
-      child: Scaffold(
+
+      Scaffold(
         backgroundColor: Colors.transparent,
         body: Column(
           children: [
@@ -443,7 +476,6 @@ class _GamePageState extends State<GamePage> {
               ],
             )),
             Expanded(
-              //alignment: Alignment.bottomCenter,
               child: Container(
                 color: Colors.transparent,
                 child: Center(
@@ -529,7 +561,7 @@ class _GamePageState extends State<GamePage> {
                                           child: Image.asset(
                                             '${cardList[index].value['image']}',
                                             /*width: sizes(context)['screenWidth'] *
-                                                      0.13,*/
+                                                          0.13,*/
                                             height:
                                                 sizes(context)['screenHeight'] *
                                                     0.29,
@@ -578,6 +610,6 @@ class _GamePageState extends State<GamePage> {
           ],
         ),
       ),
-    );
+    ]);
   }
 }
