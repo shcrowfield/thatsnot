@@ -44,6 +44,7 @@ class _GamePageState extends State<GamePage> {
     'assets/images/right_gif.gif',
     'assets/images/two_gif.gif',
   ];
+  String _previousChoosedCardId = '';
 
   Map<String, dynamic> sizes(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
@@ -179,6 +180,13 @@ class _GamePageState extends State<GamePage> {
         String activePlayer = snapshot.get('activePlayer');
         Map<String, dynamic> drawPile = snapshot.get('drawPile');
 
+        if (choosedCard.isNotEmpty &&
+            choosedCard.keys.first != _previousChoosedCardId &&
+            activePlayer != widget.user?.uid) {
+          _previousChoosedCardId = choosedCard.keys.first;
+          _showCardDownGif();
+        }
+
         t?.cancel();
         if (drawPile.isEmpty) return;
         setState(() {
@@ -204,6 +212,19 @@ class _GamePageState extends State<GamePage> {
           }
         });
       }
+    });
+  }
+
+  void _showCardDownGif() {
+    setState(() {
+      _currentBg = 'assets/images/card_down.gif';
+      _isGifShowing = true;
+    });
+    Timer(const Duration(seconds: 1), () {
+      setState(() {
+        _currentBg = 'assets/images/bg.png';
+        _isGifShowing = false;
+      });
     });
   }
 
@@ -351,15 +372,14 @@ class _GamePageState extends State<GamePage> {
   Widget build(BuildContext context) {
     return Stack(children: [
       Container(
-          key: ValueKey<String>(_currentBg),
-          decoration: BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage(_currentBg),
-              fit: BoxFit.cover,
-            ),
+        key: ValueKey<String>(_currentBg),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(_currentBg),
+            fit: BoxFit.cover,
           ),
         ),
-
+      ),
       Scaffold(
         backgroundColor: Colors.transparent,
         body: Column(
