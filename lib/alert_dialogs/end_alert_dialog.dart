@@ -15,6 +15,7 @@ class EndAlertDialog extends StatefulWidget {
 
 class _EndAlertDialogState extends State<EndAlertDialog> {
   late Future<List<Map<String, dynamic>>> _playersFuture;
+  int currentPlayerCount = 0;
 
   @override
   void initState() {
@@ -22,16 +23,20 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
     _playersFuture = getPlayersListByPoints();
   }
 
-  Future<int>  currentPlayerCount() async {
+  Future<int>  currentPlayerCountFuture() async {
     var returnMap = await LobbyManager.getPlayersList(widget.lobbyId);
-    return returnMap['currentPlayerCount'];
+    var documentSnapshot = returnMap['documentSnapshot'];
+    final data = documentSnapshot.data();
+    int currentPlayerCount = data['currentPlayerCount'];
+    return currentPlayerCount;
   }
 
   Future<List<Map<String, dynamic>>> getPlayersListByPoints() async {
     var returnMap = await LobbyManager.getPlayersList(widget.lobbyId);
     List<Map<String, dynamic>> players = List<Map<String, dynamic>>.from(returnMap['players']);
-    players.sort((a, b) => b['points'].compareTo(a['points']));
-    return players;
+    List<Map<String, dynamic>> filteredPlayers = players.where((player) => player['uid']!= '').toList();
+    filteredPlayers.sort((a, b) => b['points'].compareTo(a['points']));
+    return filteredPlayers;
   }
 
   onStartNext() {
@@ -82,7 +87,8 @@ class _EndAlertDialogState extends State<EndAlertDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () {
+          onPressed: () async {
+            currentPlayerCount = await currentPlayerCountFuture();
             LobbyManager.checkPlayerMap(widget.lobbyId, FirebaseAuth.instance.currentUser, currentPlayerCount);
             onStartNext();
           },

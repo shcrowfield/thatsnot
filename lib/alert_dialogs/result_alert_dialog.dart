@@ -145,7 +145,7 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
                         fontSize: 20,
                       ),
                     ),
-                    Text('!')
+                    const Text('!')
                   ],
                 ),
                 Text('${languageMap['TheWinnerIs']}: ${data['winnerName']}'),

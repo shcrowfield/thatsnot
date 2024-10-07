@@ -33,6 +33,9 @@ class _GamePageState extends State<GamePage> {
   bool _isEndDialogShowing = false;
   bool _isGameStarted = false;
   bool _hasPassedThisTurn = false;
+  bool _ableToPutDownCard = true;
+  bool _gameEndHandled = false;
+  bool _isInitialDataLoaded = false;
   String _currentActivePlayer = '';
   Timer? t;
   int _remainingSeconds = 10;
@@ -113,27 +116,44 @@ class _GamePageState extends State<GamePage> {
           setState(() {
             _currentActivePlayer = newActivePlayer;
             _hasPassedThisTurn = false;
+            _ableToPutDownCard = true;
           });
         }
         String answer = snapshot.get('answer');
-        var drawPile = snapshot.get('drawPile');
+        Map<String, dynamic> drawPile = snapshot.get('drawPile') ?? [];
 
         if (answer != '' && !_isResultDialogShowing) {
           _showResultDialog();
         }
 
-        if (!_isGameStarted && drawPile != null && drawPile.isNotEmpty) {
-          _isGameStarted = true;
+        if (!_isGameStarted && drawPile.isNotEmpty) {
+          setState(() {
+            _isGameStarted = true;
+            _isInitialDataLoaded = true;
+          });
         }
-        if (_isGameStarted && drawPile != null) {
-          Future.delayed(const Duration(seconds: 2), () {
-            if (drawPile.isEmpty && !_isEndDialogShowing) {
+
+        if (_isInitialDataLoaded) {
+          _checkGameEnd(drawPile);
+        }
+      }
+    });
+  }
+
+  void _checkGameEnd(Map<String, dynamic> drawPile) {
+    if (_isGameStarted && drawPile.isEmpty && !_gameEndHandled) {
+      // Add a short delay to ensure all game data is properly loaded
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {  // Check if the widget is still in the tree
+          setState(() {
+            if (!_gameEndHandled) {
+              _gameEndHandled = true;
               _showEndAlertDialog();
             }
           });
         }
-      }
-    });
+      });
+    }
   }
 
   void _showResultDialog() {
@@ -190,7 +210,7 @@ class _GamePageState extends State<GamePage> {
         t?.cancel();
         if (drawPile.isEmpty) return;
         setState(() {
-          _remainingSeconds = 15;
+          _remainingSeconds = 20;
         });
         t = Timer.periodic(const Duration(seconds: 1), (timer) async {
           setState(() {
@@ -409,13 +429,13 @@ class _GamePageState extends State<GamePage> {
                     onPressed: () async {
                       var lobbyData = await _getLobbyData();
                       LobbyManager.checkPlayerMap(widget.lobbyId, widget.user,
-                          lobbyData['currentPlayerCount']);
+                          lobbyData['currentPlayerCount'] ?? 0);
                       LobbyManager.decreseIsReady(widget.lobbyId);
                       LobbyManager.decresePlayerLimit(widget.lobbyId);
                       onStartNext();
                     },
                     label: Text(languageMap['Exit'] ?? '',
-                        style: TextStyle(fontSize: 20)),
+                        style: const TextStyle(fontSize: 20)),
                     icon: const Icon(Icons.arrow_forward),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white,
@@ -431,10 +451,9 @@ class _GamePageState extends State<GamePage> {
                 StreamBuilder(
                   stream: _snapshotStream,
                   builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      String liedColor = snapshot.data?['liedColor'];
-                      String? liedNumber =
-                          snapshot.data?['liedNumber'].toString();
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      String liedColor = snapshot.data!.get('liedColor') as String? ?? '';
+                      String liedNumber = (snapshot.data!.get('liedNumber') ?? '').toString();
                       return Padding(
                         padding: const EdgeInsets.only(right: 220),
                         child: Row(
@@ -471,7 +490,7 @@ class _GamePageState extends State<GamePage> {
                                   Text(
                                     liedNumber == '0'
                                         ? ''
-                                        : '${languageMap[liedColor]} $liedNumber',
+                                        : '${languageMap[liedColor] ?? ''} $liedNumber',
                                     style: TextStyle(
                                       color: liedColor == 'Orange'
                                           ? Colors.orange
@@ -546,7 +565,7 @@ class _GamePageState extends State<GamePage> {
                                             lobbyData['lastCardPlayer'] ==
                                                     widget.user!.uid ||
                                                 lobbyData['activePlayer'] !=
-                                                    widget.user!.uid;
+                                                    widget.user!.uid || !_ableToPutDownCard;
                                         if (isNotAllowed) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -557,6 +576,7 @@ class _GamePageState extends State<GamePage> {
                                             ),
                                           );
                                         } else {
+                                          _ableToPutDownCard = false;
                                           choosedCard = cardList[index];
                                           showDialog(
                                               context: context,

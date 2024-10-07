@@ -88,7 +88,7 @@ class DatabaseService {
     Map<String, dynamic> updatedDrawPile = {};
     int pileCount = 0;
     int count = 0;
-    lobby?['playerLimit'] == 2 ? pileCount = /*45*/ 20 : pileCount = 65;
+    lobby?['playerLimit'] == 2 ? pileCount = /*45*/ /*20*/ 5 : pileCount = 65;
 
     deck.forEach((key, value) {
       if (count < pileCount) {
@@ -165,8 +165,16 @@ class DatabaseService {
     }
   }
 
+  Future<Map<String, dynamic>> isPlayerWinner() async {
+    var returnMap = await LobbyManager.getPlayersList(lobbyId);
+    List<Map<String, dynamic>> players = returnMap['players'];
+  players.sort((a, b) =>  b['points'].compareTo(a['points']));
+    return players.first;
+  }
+
   Future updateLeaderBoard(player) async {
-    LeaderboardService(player)
+    Map<String, dynamic> winner = await isPlayerWinner();
+    LeaderboardService(player, winner)
         .newOrExistingUser(player['uid'], player['name'], player['points']);
   }
 
@@ -392,7 +400,7 @@ class DatabaseService {
             antiCardCount += 1;
             await lobbyCollection.doc(lobbyId).update({
               'player${i + 1}.points':
-                  FieldValue.increment(cardsCount + antiCardCount * 9),
+                  FieldValue.increment(-1 * (cardsCount + antiCardCount * 9)),
             });
           }
         });

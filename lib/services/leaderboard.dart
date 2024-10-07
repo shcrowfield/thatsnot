@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+
 class LeaderboardService {
 
   final Map<String, dynamic> player;
+  final Map<String, dynamic> winner;
 
-  LeaderboardService(this.player);
+  LeaderboardService(this.winner, this.player);
 
   final CollectionReference lobbyCollection =
   FirebaseFirestore.instance.collection('leaderboard');
@@ -13,28 +15,46 @@ class LeaderboardService {
   Future setLeaderboardData(String uid, String name, int points) async {
     User user = FirebaseAuth.instance.currentUser!;
     String userName = user.providerData[0].displayName!;
-    List<int> wins = [points];
+    List<int> games = [points];
+    if(winner['uid'] == FirebaseAuth.instance.currentUser?.uid){
     return await lobbyCollection.doc(uid).set({
       'name': userName,
       'uid': uid,
       'nickName': name,
       'points': points,
       'winCounter': 1,
-      'wins': wins,
-    });
+      'games': games,
+    });}else{
+      return await lobbyCollection.doc(uid).set({
+        'name': userName,
+        'uid': uid,
+        'nickName': name,
+        'points': points,
+        'winCounter': 0,
+        'games': games
+      });
+    }
   }
 
   Future updateLeaderboardData(String uid, int points) async {
     var document = await lobbyCollection.doc(uid).get();
     int currentPoint = document['points'];
     int newPoint = points + currentPoint;
-    List<dynamic> currentWins = List.from(document['wins'] ?? []);
-    currentWins.add(points);
-    return await lobbyCollection.doc(uid).update({
-      'points': newPoint,
-      'winCounter': FieldValue.increment(1),
-      'wins': currentWins,
-    });
+    List<dynamic> currentGames = List.from(document['games'] ?? []);
+    currentGames.add(points);
+    if(winner['uid'] == FirebaseAuth.instance.currentUser?.uid){
+      return await lobbyCollection.doc(uid).update({
+        'points': newPoint,
+        'winCounter': FieldValue.increment(1),
+        'games': currentGames,
+      });
+    }else{
+      return await lobbyCollection.doc(uid).update({
+        'points': newPoint,
+        'games': currentGames,
+      });
+    }
+
   }
 
   Future newOrExistingUser(String uid, String name, int points) async {
