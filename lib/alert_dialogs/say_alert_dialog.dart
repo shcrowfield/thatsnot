@@ -68,13 +68,27 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
 
       if (lobbyLiedColor.isEmpty || lobbyLiedNumber == 9) {
         colorDropdownMenuEntries = [
-          DropdownMenuEntry(value: 'Purple', label: '${languageMap['Purple']}'),
-          DropdownMenuEntry(value: 'Orange', label: '${languageMap['Orange']}'),
-          DropdownMenuEntry(value: 'Black', label: '${languageMap['Black']}'),
+          DropdownMenuEntry(
+              value: 'Purple',
+              label: '${languageMap['Purple']}',
+              style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all(Colors.purple))),
+          DropdownMenuEntry(
+              value: 'Orange',
+              label: '${languageMap['Orange']}',
+              style: ButtonStyle(
+                  foregroundColor: WidgetStateProperty.all(Colors.orange))),
+          DropdownMenuEntry(
+            value: 'Black',
+            label: '${languageMap['Black']}',
+            style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.all(Colors.black)),
+          ),
         ];
       } else {
         colorDropdownMenuEntries = [
-          DropdownMenuEntry(value: lobbyLiedColor, label: '${languageMap[lobbyLiedColor]}'),
+          DropdownMenuEntry(
+              value: lobbyLiedColor, label: '${languageMap[lobbyLiedColor]}'),
         ];
       }
 
@@ -163,7 +177,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       widget.user!,
                     );
                   });
-                 // widget.onButtonPressed();
+                  // widget.onButtonPressed();
                   Navigator.pop(context);
                   await db.incresePassCount();
                   await db.checkActivePlayer();

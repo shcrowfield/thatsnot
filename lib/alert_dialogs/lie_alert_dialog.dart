@@ -51,7 +51,6 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
     await db.increseWinnerPoints(winningPlayer);
     await db.isHandEmpty(winningPlayer);
     await db.drawForLoser(losingPlayer);
-
     await db.incresePassCount();
     await db.checkActivePlayer();
 

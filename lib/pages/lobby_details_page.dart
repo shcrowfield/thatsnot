@@ -36,7 +36,7 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
         .doc(widget.lobbyId)
         .snapshots();
 
-    _lobbySubscription =lobbyStream.listen((snapshot) {
+    _lobbySubscription = lobbyStream.listen((snapshot) {
       if (snapshot.exists && mounted) {
         final data = snapshot.data() as Map<String, dynamic>;
         if (data['isReady'] == data['playerLimit']) {
@@ -55,7 +55,6 @@ class _LobbyDetailsPageState extends State<LobbyDetailsPage> {
             settings: const RouteSettings(name: '/game'),
               builder: (context) =>
                   GamePage(lobbyId: widget.lobbyId, user: widget.user)));
-      print('Navigated to game page');
     }
   }
 

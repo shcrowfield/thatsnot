@@ -38,7 +38,7 @@ class _GamePageState extends State<GamePage> {
   bool _isInitialDataLoaded = false;
   String _currentActivePlayer = '';
   Timer? t;
-  int _remainingSeconds = 10;
+  int _remainingSeconds = 20;
   String _currentBg = 'assets/images/bg.png';
   late Timer _bgTimer;
   bool _isGifShowing = false;
@@ -386,8 +386,6 @@ class _GamePageState extends State<GamePage> {
     }
   }
 
-  late Stream<Map<String, dynamic>?> cardsStream;
-
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
@@ -585,7 +583,6 @@ class _GamePageState extends State<GamePage> {
                                                     lobbyId: widget.lobbyId,
                                                     user: widget.user,
                                                     choosedCard: choosedCard,
-                                                    //onButtonPressed: reBuild,
                                                   ),
                                               routeSettings:
                                                   const RouteSettings(
@@ -600,8 +597,6 @@ class _GamePageState extends State<GamePage> {
                                           padding: const EdgeInsets.all(8.0),
                                           child: Image.asset(
                                             '${cardList[index].value['image']}',
-                                            /*width: sizes(context)['screenWidth'] *
-                                                          0.13,*/
                                             height:
                                                 sizes(context)['screenHeight'] *
                                                     0.29,

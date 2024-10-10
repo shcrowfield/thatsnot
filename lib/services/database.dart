@@ -88,7 +88,7 @@ class DatabaseService {
     Map<String, dynamic> updatedDrawPile = {};
     int pileCount = 0;
     int count = 0;
-    lobby?['playerLimit'] == 2 ? pileCount = /*45*/ /*20*/ 5 : pileCount = 65;
+    lobby?['playerLimit'] == 2 ? pileCount = 45 /*20*/ /*5*/ : pileCount = 65;
 
     deck.forEach((key, value) {
       if (count < pileCount) {
@@ -158,10 +158,8 @@ class DatabaseService {
     Map<String, dynamic>? drawPile = lobby?['drawPile'];
     if (drawPile!.isEmpty) {
       endGameHandNotEmpty();
-      if (player['points'] != 0) {
         updateLeaderBoard(player);
-      }
-      print('Vége a Játéknak');
+
     }
   }
 
