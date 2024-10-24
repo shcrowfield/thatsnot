@@ -43,7 +43,8 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
         'lastCardPlayer',
         'answer',
         'liedColor',
-        'liedNumber'
+        'liedNumber',
+        'choosedCard',
       ];
       for (final field in requiredFields) {
         if (!lobbyResult.containsKey(field)) {
@@ -59,6 +60,7 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
       String liedColor = lobbyResult['liedColor'];
       int liedNumberN = lobbyResult['liedNumber'];
       String liedNumber = liedNumberN.toString();
+      Map<String, dynamic> choosedCard = lobbyResult['choosedCard'];
 
       print("Fetching players list");
       var returnMap = await LobbyManager.getPlayersList(widget.lobbyId);
@@ -70,6 +72,10 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
       String winnerName = '';
       String opponentName = '';
       String lastCardPlayerName = '';
+      String cardKey = choosedCard.keys.first;
+      Map<String, dynamic> choosedCardDetail = choosedCard[cardKey];
+      String choosedColor = choosedCardDetail['color'];
+      int choosedNumber = choosedCardDetail['number'];
 
       print("Processing players");
       for (var player in players) {
@@ -87,6 +93,8 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
         'liedNumber': liedNumber,
         'opponentName': opponentName,
         'lastCardPlayerName': lastCardPlayerName,
+        'choosedColor': choosedColor,
+        'choosedNumber': choosedNumber.toString(),
       };
     } catch (e, stackTrace) {
       print("Error in _getData: $e");
@@ -123,6 +131,25 @@ class _ResultAlertDialogState extends State<ResultAlertDialog> {
                         color: data['liedColor'] == 'Orange'
                             ? Colors.orange
                             : data['liedColor'] == 'Purple'
+                                ? Colors.purple
+                                : Colors.black,
+                        fontSize: 20,
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Text('${languageMap['TheOriginal']}: '),
+                    Text(
+                      data['choosedNumber'] == '10' ||
+                              data['choosedNumber'] == '0'
+                          ? '${languageMap[data['choosedColor']]}'
+                          : '${languageMap[data['choosedColor']]} ${data['choosedNumber']}',
+                      style: TextStyle(
+                        color: data['choosedColor'] == 'Orange'
+                            ? Colors.orange
+                            : data['choosedColor'] == 'Purple'
                                 ? Colors.purple
                                 : Colors.black,
                         fontSize: 20,

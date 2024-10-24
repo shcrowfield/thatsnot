@@ -9,7 +9,6 @@ class LieAlertDialog extends StatefulWidget {
   final bool colorMatch;
   final bool numberMatch;
 
-
   const LieAlertDialog({
     super.key,
     required this.lobbyId,
@@ -47,13 +46,12 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
         isColorButton ? _lobby['liedColor'] : _lobby['liedNumber'].toString();
 
     Navigator.pop(context);
-    await db.updateResult(winningPlayer, liedAttribute);
-    await db.increseWinnerPoints(winningPlayer);
-    await db.isHandEmpty(winningPlayer);
-    await db.drawForLoser(losingPlayer);
-    await db.incresePassCount();
-    await db.checkActivePlayer();
-
+      await db.updateResult(winningPlayer, liedAttribute);
+      await db.increseWinnerPoints(winningPlayer);
+      await db.isHandEmpty(/*winningPlayer*/);
+      await db.drawForLoser(losingPlayer);
+      await db.incresePassCount();
+      await db.checkActivePlayer();
   }
 
   Future<Map<String, dynamic>> _getLobby() async {
@@ -76,7 +74,7 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(languageMap['WhatIsTheLie'] ??''),
+      title: Text(languageMap['WhatIsTheLie'] ?? ''),
       content: FutureBuilder<Map<String, dynamic>>(
         future: _lobbyDataFuture,
         builder: (context, snapshot) {
@@ -103,13 +101,16 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                       child: Row(
                         children: [
                           Text('${languageMap['Not']} '),
-                          Text('${languageMap[_lobby['liedColor']]}', style: TextStyle(
-                            color: _lobby['liedColor'] == 'Orange'
-                                ? Colors.orange
-                                : _lobby['liedColor'] == 'Purple'
-                                ? Colors.purple
-                                : Colors.black,
-                          ),),
+                          Text(
+                            '${languageMap[_lobby['liedColor']]}',
+                            style: TextStyle(
+                              color: _lobby['liedColor'] == 'Orange'
+                                  ? Colors.orange
+                                  : _lobby['liedColor'] == 'Purple'
+                                      ? Colors.purple
+                                      : Colors.black,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -119,7 +120,8 @@ class _LieAlertDialogState extends State<LieAlertDialog> {
                       style: answerPressed
                           ? disabledGameButtonStyle
                           : gameButtonStyle,
-                      child: Text('${languageMap['Not']} ${_lobby['liedNumber'].toString()}'),
+                      child: Text(
+                          '${languageMap['Not']} ${_lobby['liedNumber'].toString()}'),
                     ),
                   ],
                 ),

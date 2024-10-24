@@ -87,26 +87,29 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
                   return const Text('No data found');
                 } else {
                   final data = snapshot.data;
-                  final wins = data?['wins'] ?? [];
-                  return ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: wins.length,
-                      itemBuilder: (context, index) {
-                        return Container(
-                          width: sizes(context)['screenWidth'] * 0.15,
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.white),
-                          ),
-                          // Adjust width as needed
-                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                          child: ListTile(
-                            title: Text('${index + 1}. ${languageMap['Game'] ?? ''}',
-                                style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('${wins[index]} ${languageMap['Points'] ?? ''}',
-                                style: const TextStyle(color: Colors.white)),
-                          ),
-                        );
-                      });
+                  final games = data?['games'] ?? [];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: games.length,
+                        itemBuilder: (context, index) {
+                          return Container(
+                            width: sizes(context)['screenWidth'] * 0.15,
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.white),
+                            ),
+                            // Adjust width as needed
+                            margin: const EdgeInsets.symmetric(horizontal: 1),
+                            child: ListTile(
+                              title: Text('${index + 1}. ${languageMap['Game'] ?? ''}',
+                                  style: const TextStyle(color: Colors.white)),
+                              subtitle: Text('${games[index]} ${languageMap['Points'] ?? ''}',
+                                  style: const TextStyle(color: Colors.white)),
+                            ),
+                          );
+                        }),
+                  );
                 }
               }),
         ),
@@ -127,18 +130,18 @@ class _MyLeaderboardPageState extends State<MyLeaderboardPage> {
                       return const Text('No data found');
                     } else {
                       final data = snapshot.data;
-                      final wins = data?['wins'] ?? [];
+                      final games = data?['games'] ?? [];
                       return AspectRatio(
                         aspectRatio: 20 / 5,
                         child: DChartLineN(
                           groupList: [
                             NumericGroup(
                               color: Colors.blue,
-                              id: 'wins',
-                              data: List.generate(wins.length, (index) {
+                              id: 'games',
+                              data: List.generate(games.length, (index) {
                                 return NumericData(
                                   domain: index+1,
-                                  measure: wins[index]  is num ? wins[index] : 0,
+                                  measure: games[index]  is num ? games[index] : 0,
                                 );
                               }),
                             ),

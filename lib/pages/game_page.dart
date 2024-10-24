@@ -101,7 +101,9 @@ class _GamePageState extends State<GamePage> {
   }
 
   _canPass() {
-    return _currentActivePlayer == widget.user?.uid && !_hasPassedThisTurn;
+    String activePlayer = _currentActivePlayer;
+    bool isPlayerTurn = activePlayer == widget.user?.uid;
+    return !isPlayerTurn && !_hasPassedThisTurn;
   }
 
   void _setupLobbySubscription() {
@@ -142,9 +144,8 @@ class _GamePageState extends State<GamePage> {
 
   void _checkGameEnd(Map<String, dynamic> drawPile) {
     if (_isGameStarted && drawPile.isEmpty && !_gameEndHandled) {
-      // Add a short delay to ensure all game data is properly loaded
       Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {  // Check if the widget is still in the tree
+        if (mounted) {
           setState(() {
             if (!_gameEndHandled) {
               _gameEndHandled = true;
@@ -450,8 +451,10 @@ class _GamePageState extends State<GamePage> {
                   stream: _snapshotStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasData && snapshot.data!.exists) {
-                      String liedColor = snapshot.data!.get('liedColor') as String? ?? '';
-                      String liedNumber = (snapshot.data!.get('liedNumber') ?? '').toString();
+                      String liedColor =
+                          snapshot.data!.get('liedColor') as String? ?? '';
+                      String liedNumber =
+                          (snapshot.data!.get('liedNumber') ?? '').toString();
                       return Padding(
                         padding: const EdgeInsets.only(right: 220),
                         child: Row(
@@ -563,7 +566,8 @@ class _GamePageState extends State<GamePage> {
                                             lobbyData['lastCardPlayer'] ==
                                                     widget.user!.uid ||
                                                 lobbyData['activePlayer'] !=
-                                                    widget.user!.uid || !_ableToPutDownCard;
+                                                    widget.user!.uid ||
+                                                !_ableToPutDownCard;
                                         if (isNotAllowed) {
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
@@ -627,14 +631,14 @@ class _GamePageState extends State<GamePage> {
                     ),
                     ElevatedButton(
                       onPressed: _canPass()
-                          ? null
-                          : () async {
+                          ? () async {
                               setState(() {
                                 _hasPassedThisTurn = true;
                               });
                               await db.incresePassCount();
                               await db.checkActivePlayer();
-                            },
+                            }
+                          : null,
                       style: sideButtonStyle,
                       child: Text(languageMap['PASS'] ?? ''),
                     ),

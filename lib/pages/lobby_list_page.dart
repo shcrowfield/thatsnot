@@ -46,117 +46,120 @@ class _LobbiesListPageState extends State<LobbiesListPage> {
             colors: [Colors.purple, Colors.deepPurple],
           ),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 25),
-            Text(languageMap['ActiveLobbies'] ?? '',
-                style: const TextStyle(color: Colors.white, fontSize: 24)),
-            TextButton.icon(
-              onPressed: () {
-                _onStartNext();
-              },
-              icon: const Icon(Icons.arrow_back),
-              label: Text(languageMap['Back'] ?? ''),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              decoration: InputDecoration(
-                hintText: languageMap['Nickname'] ?? '',
-                fillColor: Colors.white,
-                filled: true,
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.white, width: 2.0),
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.orange, width: 2.0),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          child: Column(
+            children: [
+              const SizedBox(height: 25),
+              Text(languageMap['ActiveLobbies'] ?? '',
+                  style: const TextStyle(color: Colors.white, fontSize: 24)),
+              TextButton.icon(
+                onPressed: () {
+                  _onStartNext();
+                },
+                icon: const Icon(Icons.arrow_back),
+                label: Text(languageMap['Back'] ?? ''),
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
                 ),
               ),
-              controller: nickNameController,
-              onChanged: (String value) {
-                setState(() {
-                  nickName = nickNameController.text;
-                });
-              },
-            ),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('lobbies')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData) {
-                    return const CircularProgressIndicator();
-                  }
-                  return ListView(
-                    children: snapshot.data!.docs.map((document) {
-                      return Column(
-                        children: [
-                          ListTile(
-                              title: Text(document['lobbyName'],
-                                  style: const TextStyle(color: Colors.white)),
-                              subtitle: Text(
-                                  "${document['currentPlayerCount']} / ${document['playerLimit']} players ${LobbyManager.allowToJoin(document['currentPlayerCount'], document['playerLimit'], nickName)}",
-                                  style: const TextStyle(color: Colors.white)),
-                              onTap: () async {
-                                if (isLobbyPressed) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content:
-                                          Text('You are already in a lobby'),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                isLobbyPressed = true;
-
-                                final canJoin = LobbyManager.allowToJoin(
-                                      document['currentPlayerCount'],
-                                      document['playerLimit'],
-                                      nickName,
-                                    ) ==
-                                    languageMap['Allow to Enter'];
-
-                                if (canJoin) {
-                                  final player = Player(
-                                    name: nickName,
-                                    points: 0,
-                                    uid: widget.user!.uid,
-                                    isActive: false,
-                                  );
-
-                                  await DatabaseService(lobbyId: document.id)
-                                      .updatePlayer(player,
-                                          document['currentPlayerCount']);
-
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => LobbyDetailsPage(
-                                        lobbyId: document.id,
-                                        user: widget.user,
-                                        nickName: nickName,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  isLobbyPressed = false;
-                                }
-                              }),
-                          const Divider(
-                            height: 5,
-                            color: Colors.white,
-                          ),
-                        ],
-                      );
-                    }).toList(),
-                  );
+              const SizedBox(height: 10),
+              TextFormField(
+                decoration: InputDecoration(
+                  hintText: languageMap['Nickname'] ?? '',
+                  fillColor: Colors.white,
+                  filled: true,
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.white, width: 2.0),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: Colors.orange, width: 2.0),
+                  ),
+                ),
+                controller: nickNameController,
+                onChanged: (String value) {
+                  setState(() {
+                    nickName = nickNameController.text;
+                  });
                 },
               ),
-            ),
-          ],
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection('lobbies')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const CircularProgressIndicator();
+                    }
+                    return ListView(
+                      children: snapshot.data!.docs.map((document) {
+                        return Column(
+                          children: [
+                            ListTile(
+                                title: Text(document['lobbyName'],
+                                    style: const TextStyle(color: Colors.white)),
+                                subtitle: Text(
+                                    "${document['currentPlayerCount']} / ${document['playerLimit']} players ${LobbyManager.allowToJoin(document['currentPlayerCount'], document['playerLimit'], nickName)}",
+                                    style: const TextStyle(color: Colors.white)),
+                                onTap: () async {
+                                  if (isLobbyPressed) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text('You are already in a lobby'),
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  isLobbyPressed = true;
+
+                                  final canJoin = LobbyManager.allowToJoin(
+                                        document['currentPlayerCount'],
+                                        document['playerLimit'],
+                                        nickName,
+                                      ) ==
+                                      languageMap['Allow to Enter'];
+
+                                  if (canJoin) {
+                                    final player = Player(
+                                      name: nickName,
+                                      points: 0,
+                                      uid: widget.user!.uid,
+                                      isActive: false,
+                                    );
+
+                                    await DatabaseService(lobbyId: document.id)
+                                        .updatePlayer(player,
+                                            document['currentPlayerCount']);
+
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => LobbyDetailsPage(
+                                          lobbyId: document.id,
+                                          user: widget.user,
+                                          nickName: nickName,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    isLobbyPressed = false;
+                                  }
+                                }),
+                            const Divider(
+                              height: 5,
+                              color: Colors.white,
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -359,12 +359,12 @@ class DatabaseService {
     }
   }
 
-  Future isHandEmpty(String uid) async {
+  Future isHandEmpty() async {
     var returnMap = await LobbyManager.getPlayersList(lobbyId);
     List<Map<String, dynamic>> players = returnMap['players'];
     Map<String, dynamic> drawPile = await sortDrawPile();
     for (int i = 0; i < players.length; i++) {
-      if (players[i]['uid'] == uid) {
+     // if (players[i]['uid'] == uid) {
         if (players[i]['cards'].isEmpty) {
           Map<String, dynamic> player = players[i];
           Map<String, dynamic> playerCards = player['cards'];
@@ -381,7 +381,7 @@ class DatabaseService {
           drawPileIsEmpty(player);
           break;
         }
-      }
+      //}
     }
   }
 
@@ -453,6 +453,7 @@ class DatabaseService {
     int idx = 0;
     bool foundActive = false;
     if (lobby['passCount'] >= lobby['currentPlayerCount']) {
+      isHandEmpty();
       while (idx < lobby['currentPlayerCount'] && !foundActive) {
         if (players[idx]['isActive']) {
           foundActive = true;
