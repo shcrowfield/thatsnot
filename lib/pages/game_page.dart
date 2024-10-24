@@ -100,10 +100,22 @@ class _GamePageState extends State<GamePage> {
     });
   }
 
-  _canPass() {
-    String activePlayer = _currentActivePlayer;
+  Future<bool> canPass() async {
+    var lobby = await _getLobbyData();
+    String activePlayer = lobby['activePlayer'];
     bool isPlayerTurn = activePlayer == widget.user?.uid;
     return !isPlayerTurn && !_hasPassedThisTurn;
+  }
+
+  void _handlePass() async {
+    bool canPassNow = await canPass();
+    if (canPassNow) {
+      setState(() {
+        _hasPassedThisTurn = true;
+      });
+      await db.incresePassCount();
+      await db.checkActivePlayer();
+    }
   }
 
   void _setupLobbySubscription() {
@@ -211,7 +223,7 @@ class _GamePageState extends State<GamePage> {
         t?.cancel();
         if (drawPile.isEmpty) return;
         setState(() {
-          _remainingSeconds = 20;
+          _remainingSeconds = 30;
         });
         t = Timer.periodic(const Duration(seconds: 1), (timer) async {
           setState(() {
@@ -578,12 +590,17 @@ class _GamePageState extends State<GamePage> {
                                             ),
                                           );
                                         } else {
-                                          _ableToPutDownCard = false;
+                                          //_ableToPutDownCard = false;
                                           choosedCard = cardList[index];
                                           showDialog(
                                               context: context,
                                               builder: (context) =>
                                                   SayAlertDialog(
+                                                    onButtonPressed: () {
+                                                      setState(() {
+                                                        _ableToPutDownCard = false;
+                                                      });
+                                                    },
                                                     lobbyId: widget.lobbyId,
                                                     user: widget.user,
                                                     choosedCard: choosedCard,
@@ -591,11 +608,9 @@ class _GamePageState extends State<GamePage> {
                                               routeSettings:
                                                   const RouteSettings(
                                                       name: 'SayAlertDialog'));
-                                          // reBuild();
+
                                         }
                                       },
-                                      //child: Card(
-                                      //color: Colors.black,
                                       child: Center(
                                         child: Padding(
                                           padding: const EdgeInsets.all(8.0),
@@ -630,16 +645,10 @@ class _GamePageState extends State<GamePage> {
                           )),
                     ),
                     ElevatedButton(
-                      onPressed: _canPass()
-                          ? () async {
-                              setState(() {
-                                _hasPassedThisTurn = true;
-                              });
-                              await db.incresePassCount();
-                              await db.checkActivePlayer();
-                            }
-                          : null,
-                      style: sideButtonStyle,
+                      onPressed: () => _handlePass(),
+                      style: _hasPassedThisTurn || _currentActivePlayer == widget.user?.uid
+                          ? disabledSideButtonStyle
+                          : sideButtonStyle,
                       child: Text(languageMap['PASS'] ?? ''),
                     ),
                   ],

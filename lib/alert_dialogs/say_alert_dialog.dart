@@ -9,12 +9,14 @@ class SayAlertDialog extends StatefulWidget {
   final String lobbyId;
   final User? user;
   final MapEntry<String, dynamic> choosedCard;
+  final VoidCallback onButtonPressed;
 
   const SayAlertDialog({
     super.key,
     required this.lobbyId,
     required this.user,
     required this.choosedCard,
+    required this.onButtonPressed,
   });
 
   @override
@@ -177,7 +179,7 @@ class _SayAlertDialogState extends State<SayAlertDialog> {
                       widget.user!,
                     );
                   });
-                  // widget.onButtonPressed();
+                   widget.onButtonPressed();
                   Navigator.pop(context);
                   await db.incresePassCount();
                   await db.checkActivePlayer();
